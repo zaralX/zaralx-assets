@@ -3,7 +3,7 @@ name: CI Pipeline
 on:
   push:
     branches:
-      - main
+      - master
 
 env:
   DOCKER_IMAGE: zaralx-assets:latest
