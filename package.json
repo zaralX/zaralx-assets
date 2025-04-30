@@ -1,5 +1,5 @@
 {
-  "name": "minecraft-assets",
+  "name": "zaralx-assets",
   "version": "1.0.0",
   "description": "This project was bootstrapped with Fastify-CLI.",
   "main": "app.js",
@@ -11,11 +11,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "fastify": "^4.26.1",
-    "fastify-plugin": "^4.0.0",
     "@fastify/autoload": "^5.0.0",
     "@fastify/sensible": "^5.0.0",
-    "fastify-cli": "^6.1.1"
+    "fastify": "^4.26.1",
+    "fastify-cli": "^6.1.1",
+    "fastify-plugin": "^4.0.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/node": "^22.15.3"
+  }
 }
