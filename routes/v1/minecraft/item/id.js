@@ -7,7 +7,7 @@ const { createReadStream } = require('fs')
 module.exports = async function (fastify, opts) {
   fastify.get('/:id', async function (request, reply) {
     const itemId = request.params.id
-    const imagePath = path.join('assets', 'items', `${itemId}.png`)
+    const imagePath = path.join('assets', 'items', `${itemId}.webp`)
 
     try {
       // Check if file exists
@@ -15,7 +15,7 @@ module.exports = async function (fastify, opts) {
       
       // Set cache headers for 1 day
       reply.header('Cache-Control', 'public, max-age=86400')
-      reply.header('Content-Type', 'image/png')
+      reply.header('Content-Type', 'image/webp')
       
       // Create and send the file stream
       const stream = createReadStream(imagePath)
