@@ -1,21 +1,21 @@
 'use strict'
 
-const path = require('path')
-const fs = require('fs').promises
-const {createReadStream} = require('fs')
-
-let categories = {}
-
 module.exports = async function (fastify, opts) {
-    // Preload categories
-    categories = JSON.parse(
-        await fs.readFile(
-            path.join('assets', 'item_categories.json'),
-            {encoding: 'utf8'}
-        )
-    )
-
     fastify.get('/categories', async function (request, reply) {
-        reply.send(categories)
+        try {
+            if (!fastify.categories) {
+                return reply.status(503).send({
+                    error: 'Categories not initialized',
+                    message: 'The categories data is not yet available. Please try again in a few moments.'
+                })
+            }
+            return reply.status(200).send(fastify.categories)
+        } catch (error) {
+            fastify.log.error(error)
+            return reply.status(500).send({
+                error: 'Internal Server Error',
+                message: 'An error occurred while retrieving categories'
+            })
+        }
     })
 }

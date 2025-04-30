@@ -5,8 +5,8 @@ const fs = require('fs').promises
 const {createReadStream} = require('fs')
 
 module.exports = async function (fastify, opts) {
-  fastify.get('/:id', async function (request, reply) {
-    const itemId = request.params.id
+  fastify.get('/icon', async function (request, reply) {
+    const itemId = request.params.item
     const imagePath = path.join('assets', 'items', `${itemId}.webp`)
 
     try {
