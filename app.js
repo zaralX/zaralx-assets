@@ -17,7 +17,8 @@ module.exports = async function (fastify, opts) {
   fastify.decorate('skin_url', 'https://mineskin.eu/skin/%A')
 
   fastify.decorate('cache', {
-    skin: new Map()
+    skin: new Map(),
+    skinFace: new Map()
   })
 
   await fastify.register(AutoLoad, {
