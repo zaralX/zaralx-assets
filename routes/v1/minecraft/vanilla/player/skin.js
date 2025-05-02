@@ -4,7 +4,6 @@ const {isValidUUID} = require("../../../../../utils/uuidUtil");
 const axios = require('axios');
 
 module.exports = async function (fastify, opts) {
-    const skinCache = new Map();
     const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
     fastify.get('/skin/:uuid', async function (request, reply) {
@@ -15,7 +14,7 @@ module.exports = async function (fastify, opts) {
         }
 
         // Check cache first
-        const cachedSkin = skinCache.get(uuid);
+        const cachedSkin = fastify.cache.skin.get(uuid);
         if (cachedSkin && Date.now() - cachedSkin.timestamp < CACHE_TTL) {
             reply.header('Content-Type', 'image/png');
             reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`);
@@ -29,7 +28,7 @@ module.exports = async function (fastify, opts) {
             });
 
             // Cache the skin data
-            skinCache.set(uuid, {
+            fastify.cache.skin.set(uuid, {
                 data: response.data,
                 timestamp: Date.now()
             });

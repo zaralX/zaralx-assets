@@ -16,6 +16,10 @@ module.exports = async function (fastify, opts) {
   // Mojang API has small rate limit. Mineskin - database with skins
   fastify.decorate('skin_url', 'https://mineskin.eu/skin/%A')
 
+  fastify.decorate('cache', {
+    skin: new Map()
+  })
+
   await fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'plugins'),
     options: Object.assign({}, opts)
