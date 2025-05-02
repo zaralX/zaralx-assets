@@ -5,7 +5,14 @@ const fs = require('fs').promises
 const {createReadStream} = require('fs')
 
 module.exports = async function (fastify, opts) {
-  fastify.get('/icon', async function (request, reply) {
+  fastify.get('/icon', {
+    config: {
+      rateLimit: {
+        timeWindow: '1 minute',
+        max: 5000
+      }
+    }
+  }, async function (request, reply) {
     const itemId = request.params.item
     const imagePath = path.join('assets', 'items', `${itemId}.webp`)
 
