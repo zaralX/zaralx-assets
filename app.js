@@ -18,7 +18,8 @@ module.exports = async function (fastify, opts) {
 
   fastify.decorate('cache', {
     skin: new Map(),
-    skinFace: new Map()
+    skinFace: new Map(),
+    skinFullFace: new Map(),
   })
 
   await fastify.register(AutoLoad, {
