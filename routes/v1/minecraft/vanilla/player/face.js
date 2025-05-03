@@ -30,9 +30,13 @@ module.exports = async function (fastify, opts) {
                     responseType: 'arraybuffer'
                 });
                 skin = response.data;
+                fastify.cache.skin.set(uuid, {
+                    data: response.data,
+                    timestamp: Date.now()
+                });
             }
 
-            const sharpSkin = sharp(skin);
+            const sharpSkin = sharp(skin.data);
             const skinFace = await sharpSkin.extract({left: 8, top: 8, width: 8, height: 8})
                 .resize(256, 256, {kernel: sharp.kernel.nearest})
                 .toBuffer();
