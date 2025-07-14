@@ -1,0 +1,9 @@
+services:
+  service:
+    build: .
+    restart: unless-stopped
+    pull_policy: build
+    env_file:
+      - stack.env
+    ports:
+      - "${SERVER_PORT:-3000}:${FASTIFY_PORT:-3000}"
