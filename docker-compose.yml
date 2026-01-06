@@ -11,6 +11,7 @@ services:
       - "${SERVER_PORT:-3000}:${FASTIFY_PORT:-3000}"
     networks:
       - zassets
+      - public
     depends_on:
       - redis
 
@@ -28,6 +29,8 @@ networks:
     driver: overlay
     attachable: true
     internal: true
+  public:
+    driver: overlay
 
 volumes:
   redis_data:
