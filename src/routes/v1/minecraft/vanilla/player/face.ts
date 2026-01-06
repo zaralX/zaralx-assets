@@ -3,17 +3,23 @@ import {isValidUUID} from "../../../../../utils/uuidUtil";
 import axios from 'axios';
 import sharp from 'sharp';
 import path from "path";
+import {isValidMinecraftNickname, nicknameToUUID} from "../../../../../utils/nicknameUtil";
 
 const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
     const FULL_FACE_RESIZE = 8;
 
-    fastify.get('/face/:uuid', async function (request, reply) {
-        const uuid = (request.params as any).uuid;
+    fastify.get('/face/:identifier', async function (request, reply) {
+        const identifier: string = (request.params as any).identifier;
 
-        if (!isValidUUID(uuid)) {
-            return reply.status(400).send({message: 'Invalid UUID'});
+        const isUuid = isValidUUID(identifier)
+        const isNickname = isValidMinecraftNickname(identifier)
+
+        if (!isUuid && !isNickname) {
+            return reply.status(400).send({message: 'Invalid UUID or Nickname'});
         }
+
+        const uuid = isUuid ? identifier : await nicknameToUUID(fastify, identifier)
 
         // Check cache first
         const cachedSkinFace = (fastify as any).cache.skinFace.get(uuid);
@@ -62,12 +68,17 @@ const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         }
     });
 
-    fastify.get('/face/:uuid/full', async function (request, reply) {
-        const uuid = (request.params as any).uuid;
+    fastify.get('/face/:identifier/full', async function (request, reply) {
+        const identifier: string = (request.params as any).identifier;
 
-        if (!isValidUUID(uuid)) {
-            return reply.status(400).send({message: 'Invalid UUID'});
+        const isUuid = isValidUUID(identifier)
+        const isNickname = isValidMinecraftNickname(identifier)
+
+        if (!isUuid && !isNickname) {
+            return reply.status(400).send({message: 'Invalid UUID or Nickname'});
         }
+
+        const uuid = isUuid ? identifier : await nicknameToUUID(fastify, identifier)
 
         // Check cache first
         const cachedSkinFullFace = (fastify as any).cache.skinFullFace.get(uuid);

@@ -1,17 +1,23 @@
 import {isValidUUID} from "../../../../../utils/uuidUtil";
 import axios from 'axios';
 import {FastifyPluginAsync} from "fastify";
+import {isValidMinecraftNickname, nicknameToUUID} from "../../../../../utils/nicknameUtil";
 
 
 const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
-    fastify.get('/skin/:uuid', async function (request, reply) {
-        const uuid = (request.params as any).uuid;
+    fastify.get('/skin/:identifier', async function (request, reply) {
+        const identifier: string = (request.params as any).identifier;
 
-        if (!isValidUUID(uuid)) {
-            return reply.status(400).send({message: 'Invalid UUID'});
+        const isUuid = isValidUUID(identifier)
+        const isNickname = isValidMinecraftNickname(identifier)
+
+        if (!isUuid && !isNickname) {
+            return reply.status(400).send({message: 'Invalid UUID or Nickname'});
         }
+
+        const uuid = isUuid ? identifier : await nicknameToUUID(fastify, identifier)
 
         // Check cache first
         const cachedSkin = (fastify as any).cache.skin.get(uuid);
