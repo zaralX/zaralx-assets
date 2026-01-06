@@ -12,4 +12,4 @@ Don't forget to give the project a star! Thanks again!
 5. Open a Pull Request
 
 # Documentation
-https://assets.zaralx.ru
+https://zaralx.gitbook.io/assets
