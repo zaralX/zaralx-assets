@@ -7,7 +7,60 @@ import {isValidMinecraftNickname, nicknameToUUID} from "../../../../../utils/nic
 const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
-    fastify.get('/skin/:identifier', async function (request, reply) {
+    fastify.get('/skin/:identifier', {
+        schema: {
+            description: 'Get player skin image by UUID or nickname',
+            params: {
+                type: 'object',
+                required: ['identifier'],
+                properties: {
+                    identifier: {
+                        type: 'string',
+                        description: 'Player UUID or Minecraft nickname',
+                        examples: ['069a79f4-44e9-4726-a5fa-f2b5e5e5e5e5', 'Notch']
+                    }
+                }
+            },
+            response: {
+                200: {
+                    type: 'object',
+                    description: '![Example](https://assets.zaralx.ru/api/v1/minecraft/vanilla/player/skin/_zaralX_)',
+                    content: {
+                        'image/png': {
+                            schema: {
+                                type: 'string',
+                                format: 'binary'
+                            }
+                        }
+                    }
+                },
+                400: {
+                    type: 'object',
+                    description: 'Bad request - invalid UUID or nickname',
+                    properties: {
+                        message: {
+                            type: 'string',
+                            example: 'Invalid UUID or Nickname'
+                        }
+                    }
+                },
+                500: {
+                    type: 'object',
+                    description: 'Internal server error',
+                    properties: {
+                        message: {
+                            type: 'string',
+                            example: 'Failed to fetch skin'
+                        },
+                        error: {
+                            type: 'string',
+                            description: 'Error message'
+                        }
+                    }
+                }
+            }
+        }
+    }, async function (request, reply) {
         const identifier: string = (request.params as any).identifier;
 
         const isUuid = isValidUUID(identifier)
