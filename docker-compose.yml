@@ -11,6 +11,9 @@ services:
       - zassets
     depends_on:
       - redis
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     ports:
       - "${SERVER_PORT:-3000}:${FASTIFY_PORT:-3000}"
 
