@@ -7,21 +7,21 @@ services:
     pull_policy: build
     environment:
       - REDIS_HOST=redis
-    ports:
-      - "${SERVER_PORT:-3000}:${FASTIFY_PORT:-3000}"
     networks:
       - zassets
     depends_on:
       - redis
+    ports:
+      - "${SERVER_PORT:-3000}:${FASTIFY_PORT:-3000}"
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
     networks:
       - zassets
+    volumes:
+      - redis_data:/data
 
 networks:
   zassets:
