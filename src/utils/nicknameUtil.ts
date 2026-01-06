@@ -1,11 +1,11 @@
-const axios = require('axios')
+import axios from 'axios';
 
-function isValidMinecraftNickname(nickname) {
+export function isValidMinecraftNickname(nickname: string) {
     const regex = /^[a-zA-Z0-9_]{3,16}$/;
     return regex.test(nickname);
 }
 
-async function nicknameToUUID(nickname) {
+export async function nicknameToUUID(nickname: string) {
     const res = await axios.get(
         `https://api.mojang.com/users/profiles/minecraft/${nickname}`,
         { validateStatus: s => s === 200 || s === 204 }
@@ -17,5 +17,3 @@ async function nicknameToUUID(nickname) {
 
     return res.data.id
 }
-
-module.exports = {isValidMinecraftNickname, nicknameToUUID}
