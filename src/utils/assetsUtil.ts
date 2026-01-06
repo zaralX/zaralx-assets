@@ -79,7 +79,9 @@ export async function preload_lang(
         .replace('%A', asset_hash_part)
         .replace('%B', asset_hash)
 
-    const response = await axios.get(url)
+    const response = await axios.get(url, {
+        timeout: 30000
+    })
     fastify.lang![id] = response.data
 
     console.log(`Preloaded ${id}`)
