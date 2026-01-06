@@ -6,7 +6,7 @@ export function isValidMinecraftNickname(nickname: string) {
     return regex.test(nickname);
 }
 
-export async function nicknameToUUID(fastify: FastifyInstance | null, nickname: string) {
+export async function nicknameToUUID(fastify: FastifyInstance | null, nickname: string): Promise<string> {
     if (fastify) {
         const result = await fastify.redis.get(`minecraft_vanilla_nickname:${nickname}`)
         if (result) {
