@@ -5,7 +5,7 @@
   "main": "app.ts",
   "scripts": {
     "test": "npm run build:ts && tsc -p test/tsconfig.json && c8 node --test -r ts-node/register \"test/**/*.ts\"",
-    "start": "npm run build:ts && fastify start -a 0.0.0.0 -l info dist/app.js",
+    "start": "npm run build:ts && fastify start -l info dist/app.js",
     "build:ts": "tsc",
     "watch:ts": "tsc -w",
     "dev": "npm run build:ts && concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:watch:ts\" \"npm:dev:start\"",
@@ -22,6 +22,7 @@
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/redis": "^7.1.0",
     "@fastify/sensible": "^6.0.0",
+    "@fastify/swagger": "^9.6.1",
     "axios": "^1.12.2",
     "fastify": "^5.0.0",
     "fastify-cli": "^7.4.0",
