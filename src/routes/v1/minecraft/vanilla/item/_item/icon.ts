@@ -6,6 +6,33 @@ const fs = require('fs').promises
 
 const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     fastify.get('/icon', {
+        schema: {
+            params: {
+                type: 'object',
+                required: ['item'],
+                properties: {
+                    item: { type: 'string', description: 'The item identifier', examples: ['diamond_block', 'carrot'] }
+                }
+            },
+            response: {
+                200: {
+                    type: 'object',
+                    description: '![Example](https://assets.zaralx.ru/api/v1/minecraft/vanilla/item/diamond_block/icon)',
+                    content: {
+                        'image/webp': {
+                            schema: {
+                                type: 'string',
+                                format: 'binary'
+                            }
+                        }
+                    }
+                },
+                404: {
+                    description: 'Item not found',
+                    type: 'object'
+                }
+            }
+        },
         config: {
             rateLimit: {
                 timeWindow: '1 minute',

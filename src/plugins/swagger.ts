@@ -15,7 +15,7 @@ export default fp<FastifySwaggerOptions>(async (fastify) => {
                 version: '1.1.0'
             },
             servers: [{
-                url: 'https://assets.zaralx.ru'
+                url: 'https://assets.zaralx.ru/api'
             }]
         },
     })
