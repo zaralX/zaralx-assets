@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   service:
     build: .
@@ -7,3 +9,25 @@ services:
       - stack.env
     ports:
       - "${SERVER_PORT:-3000}:${FASTIFY_PORT:-3000}"
+    networks:
+      - zassets
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - zassets
+
+networks:
+  zassets:
+    driver: overlay
+    attachable: true
+    internal: true
+
+volumes:
+  redis_data:

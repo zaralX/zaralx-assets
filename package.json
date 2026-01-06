@@ -20,6 +20,7 @@
     "@fastify/compress": "^8.0.1",
     "@fastify/cors": "^11.1.0",
     "@fastify/rate-limit": "^10.3.0",
+    "@fastify/redis": "^7.1.0",
     "@fastify/sensible": "^6.0.0",
     "axios": "^1.12.2",
     "fastify": "^5.0.0",
@@ -28,8 +29,8 @@
     "sharp": "^0.34.5"
   },
   "devDependencies": {
-    "concurrently": "^9.0.0",
     "@types/node": "^22.18.8",
+    "concurrently": "^9.0.0",
     "fastify-tsconfig": "^3.0.0",
     "ts-node": "^10.4.0",
     "typescript": "~5.8.2"
