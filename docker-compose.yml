@@ -5,8 +5,8 @@ services:
     build: .
     restart: unless-stopped
     pull_policy: build
-    env_file:
-      - stack.env
+    environment:
+      - REDIS_HOST=redis
     ports:
       - "${SERVER_PORT:-3000}:${FASTIFY_PORT:-3000}"
     networks:
