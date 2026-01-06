@@ -1,6 +1,6 @@
-'use strict'
+import {FastifyPluginAsync} from 'fastify'
 
-module.exports = async function (fastify, opts) {
+const root: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     fastify.get('/', async function (request, reply) {
         return {
             message: "Open source project. Github: https://github.com/zaralX/zaralx-assets",
@@ -12,3 +12,5 @@ module.exports = async function (fastify, opts) {
         }
     })
 }
+
+export default root

@@ -1,15 +1,15 @@
-'use strict'
+import {FastifyPluginAsync} from "fastify";
 
 const search_in = ["item.minecraft.%A", "block.minecraft.%A"]
 
-module.exports = async function (fastify, opts) {
+const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     fastify.get('/lang/:lang/name', async function (request, reply) {
-        const item = request.params.item
-        const lang = request.params.lang
-        const lang_data = fastify.lang?.[lang]
+        const item = (request.params as any).item
+        const lang = (request.params as any).lang
+        const lang_data = (fastify as any).lang?.[lang]
 
         if (!lang_data) {
-            return reply.status(400).send({message: "Unknown lang", lang_keys: Object.keys(fastify.lang)})
+            return reply.status(400).send({message: "Unknown lang", lang_keys: Object.keys((fastify as any).lang)})
         }
 
 
@@ -24,3 +24,5 @@ module.exports = async function (fastify, opts) {
         return reply.status(400).send({message: `Not found item name`})
     })
 }
+
+export default route
