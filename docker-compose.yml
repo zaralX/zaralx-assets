@@ -31,6 +31,7 @@ networks:
     internal: true
   public:
     driver: overlay
+    attachable: true
 
 volumes:
   redis_data:
