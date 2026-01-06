@@ -1,6 +1,5 @@
-'use strict'
-
-const fp = require('fastify-plugin')
+import fp from 'fastify-plugin'
+import fastifyCompress, {FastifyCompressOptions} from '@fastify/compress'
 
 /**
  * Adds compression utils to the Fastify reply object and
@@ -9,8 +8,8 @@ const fp = require('fastify-plugin')
  *
  * @see https://github.com/fastify/fastify-compress
  */
-module.exports = fp(async function (fastify, opts) {
-    fastify.register(require('@fastify/compress'), {
+export default fp<FastifyCompressOptions>(async (fastify) => {
+    fastify.register(fastifyCompress, {
         threshold: 1024,
         encodings: ['gzip', 'deflate']
     })

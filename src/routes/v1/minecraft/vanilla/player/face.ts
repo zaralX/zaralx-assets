@@ -1,23 +1,22 @@
-'use strict'
+import {FastifyPluginAsync} from "fastify";
+import {isValidUUID} from "../../../../../utils/uuidUtil";
+import axios from 'axios';
+import sharp from 'sharp';
+import path from "path";
 
-const {isValidUUID} = require("../../../../../utils/uuidUtil");
-const axios = require('axios');
-const sharp = require('sharp');
-const path = require("path");
-
-module.exports = async function (fastify, opts) {
+const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
     const FULL_FACE_RESIZE = 8;
 
     fastify.get('/face/:uuid', async function (request, reply) {
-        const uuid = request.params.uuid;
+        const uuid = (request.params as any).uuid;
 
         if (!isValidUUID(uuid)) {
             return reply.status(400).send({message: 'Invalid UUID'});
         }
 
         // Check cache first
-        const cachedSkinFace = fastify.cache.skinFace.get(uuid);
+        const cachedSkinFace = (fastify as any).cache.skinFace.get(uuid);
         if (cachedSkinFace && Date.now() - cachedSkinFace.timestamp < CACHE_TTL) {
             reply.header('Content-Type', 'image/png');
             reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`);
@@ -25,9 +24,9 @@ module.exports = async function (fastify, opts) {
         }
 
         try {
-            let skin = fastify.cache.skin.get(uuid);
+            let skin = (fastify as any).cache.skin.get(uuid);
             if (!skin) {
-                const skin_url = fastify.skin_url.replace("%A", uuid);
+                const skin_url = (fastify as any).skin_url.replace("%A", uuid);
                 const response = await axios.get(skin_url, {
                     responseType: 'arraybuffer'
                 });
@@ -35,7 +34,7 @@ module.exports = async function (fastify, opts) {
                     data: response.data,
                     timestamp: Date.now()
                 };
-                fastify.cache.skin.set(uuid, skin);
+                (fastify as any).cache.skin.set(uuid, skin);
             }
 
             const sharpSkin = sharp(skin.data);
@@ -44,7 +43,7 @@ module.exports = async function (fastify, opts) {
                 .toBuffer();
 
             // Cache the skinFace data
-            fastify.cache.skinFace.set(uuid, {
+            (fastify as any).cache.skinFace.set(uuid, {
                 data: skinFace,
                 timestamp: Date.now()
             });
@@ -58,20 +57,20 @@ module.exports = async function (fastify, opts) {
             fastify.log.error(error);
             return reply.status(500).send({
                 message: 'Failed to fetch skin',
-                error: error.message
+                error: (error as any).message
             });
         }
     });
 
     fastify.get('/face/:uuid/full', async function (request, reply) {
-        const uuid = request.params.uuid;
+        const uuid = (request.params as any).uuid;
 
         if (!isValidUUID(uuid)) {
             return reply.status(400).send({message: 'Invalid UUID'});
         }
 
         // Check cache first
-        const cachedSkinFullFace = fastify.cache.skinFullFace.get(uuid);
+        const cachedSkinFullFace = (fastify as any).cache.skinFullFace.get(uuid);
         if (cachedSkinFullFace && Date.now() - cachedSkinFullFace.timestamp < CACHE_TTL) {
             reply.header('Content-Type', 'image/png');
             reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`);
@@ -79,9 +78,9 @@ module.exports = async function (fastify, opts) {
         }
 
         try {
-            let skin = fastify.cache.skin.get(uuid);
+            let skin = (fastify as any).cache.skin.get(uuid);
             if (!skin) {
-                const skin_url = fastify.skin_url.replace("%A", uuid);
+                const skin_url = (fastify as any).skin_url.replace("%A", uuid);
                 const response = await axios.get(skin_url, {
                     responseType: 'arraybuffer'
                 });
@@ -89,7 +88,7 @@ module.exports = async function (fastify, opts) {
                     data: response.data,
                     timestamp: Date.now()
                 };
-                fastify.cache.skin.set(uuid, skin);
+                (fastify as any).cache.skin.set(uuid, skin);
             }
 
             const sharpSkin = sharp(skin.data);
@@ -116,7 +115,7 @@ module.exports = async function (fastify, opts) {
                 .toBuffer();
 
             // Cache the skinFullFace data
-            fastify.cache.skinFullFace.set(uuid, {
+            (fastify as any).cache.skinFullFace.set(uuid, {
                 data: skinFullFace,
                 timestamp: Date.now()
             });
@@ -130,8 +129,10 @@ module.exports = async function (fastify, opts) {
             fastify.log.error(error);
             return reply.status(500).send({
                 message: 'Failed to fetch skin',
-                error: error.message
+                error: (error as any).message
             });
         }
     });
 }
+
+export default route
