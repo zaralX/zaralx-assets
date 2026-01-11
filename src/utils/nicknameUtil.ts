@@ -6,7 +6,7 @@ export function isValidMinecraftNickname(nickname: string) {
     return regex.test(nickname);
 }
 
-export async function nicknameToUUID(fastify: FastifyInstance | null, nickname: string): Promise<string> {
+export async function nicknameToUUID(fastify: FastifyInstance | null, nickname: string): Promise<string | null> {
     if (fastify) {
         const result = await fastify.redis.get(`minecraft_vanilla_nickname:${nickname}`)
         if (result) {
@@ -15,11 +15,11 @@ export async function nicknameToUUID(fastify: FastifyInstance | null, nickname: 
     }
     const res = await axios.get(
         `https://api.mojang.com/users/profiles/minecraft/${nickname}`,
-        { validateStatus: s => s === 200 || s === 204 }
+        { validateStatus: s => s === 200 || s === 204 || s === 404 }
     )
 
-    if (res.status === 204) {
-        throw new Error('Player not found')
+    if (res.status !== 200) {
+        return null
     }
 
     if (fastify) {
