@@ -1,6 +1,6 @@
 {
   "name": "zaralx-assets",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "zaralX Assets - https://assets.zaralx.ru",
   "main": "app.ts",
   "scripts": {
