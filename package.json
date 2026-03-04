@@ -1,15 +1,15 @@
 {
   "name": "zaralx-assets",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "zaralX Assets - https://assets.zaralx.ru",
   "main": "app.ts",
   "scripts": {
     "test": "npm run build:ts && tsc -p test/tsconfig.json && c8 node --test -r ts-node/register \"test/**/*.ts\"",
-    "start": "npm run build:ts && fastify start -l info dist/app.js",
+    "start": "npm run build:ts && fastify start dist/app.js",
     "build:ts": "tsc",
     "watch:ts": "tsc -w",
     "dev": "npm run build:ts && concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:watch:ts\" \"npm:dev:start\"",
-    "dev:start": "fastify start --ignore-watch=.ts$ -w -l info -P dist/app.js",
+    "dev:start": "fastify start --ignore-watch=.ts$ -w -P dist/app.js",
     "clear-cache-windows": "rmdir /s /q dist"
   },
   "keywords": [],

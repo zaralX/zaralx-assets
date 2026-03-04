@@ -77,6 +77,7 @@ const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         // Check cache first
         const cachedSkinFace = (fastify as any).cache.skinFace.get(uuid);
         if (cachedSkinFace && Date.now() - cachedSkinFace.timestamp < CACHE_TTL) {
+            fastify.log.debug(`GET FACE ${identifier} FROM REDIS CACHE ${Date.now() - cachedSkinFace.timestamp} < ${CACHE_TTL}`)
             reply.header('Content-Type', 'image/png');
             reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`);
             return reply.send(cachedSkinFace.data);
@@ -106,6 +107,8 @@ const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
                 data: skinFace,
                 timestamp: Date.now()
             });
+
+            fastify.log.debug(`GET FACE ${identifier} CLAIMED TO CACHE`)
 
             // Set response headers
             reply.header('Content-Type', 'image/png');
@@ -189,6 +192,7 @@ const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         // Check cache first
         const cachedSkinFullFace = (fastify as any).cache.skinFullFace.get(uuid);
         if (cachedSkinFullFace && Date.now() - cachedSkinFullFace.timestamp < CACHE_TTL) {
+            fastify.log.debug(`GET FULL FACE ${identifier} FROM REDIS CACHE ${Date.now() - cachedSkinFullFace.timestamp} < ${CACHE_TTL}`)
             reply.header('Content-Type', 'image/png');
             reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`);
             return reply.send(cachedSkinFullFace.data);
@@ -236,6 +240,8 @@ const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
                 data: skinFullFace,
                 timestamp: Date.now()
             });
+
+            fastify.log.debug(`GET FULL FACE ${identifier} CLAIMED TO CACHE`)
 
             // Set response headers
             reply.header('Content-Type', 'image/png');
