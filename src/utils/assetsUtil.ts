@@ -35,7 +35,7 @@ async function init_categories(fastify: FastifyInstance) {
 
         fastify.decorate('categories', categories)
     } catch (error) {
-        fastify.log.error('Failed to initialize categories:', error)
+        fastify.log.error('Failed to initialize categories: ' + error)
         fastify.decorate('categories', {})
         throw error
     }
