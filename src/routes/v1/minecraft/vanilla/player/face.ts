@@ -85,7 +85,7 @@ const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 
         try {
             let skin = (fastify as any).cache.skin.get(uuid);
-            if (!skin) {
+            if (!skin || Date.now() - skin.timestamp < CACHE_TTL) {
                 const skin_url = (fastify as any).skin_url.replace("%A", uuid);
                 const response = await axios.get(skin_url, {
                     responseType: 'arraybuffer'
@@ -200,7 +200,7 @@ const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 
         try {
             let skin = (fastify as any).cache.skin.get(uuid);
-            if (!skin) {
+            if (!skin || Date.now() - skin.timestamp < CACHE_TTL) {
                 const skin_url = (fastify as any).skin_url.replace("%A", uuid);
                 const response = await axios.get(skin_url, {
                     responseType: 'arraybuffer'
