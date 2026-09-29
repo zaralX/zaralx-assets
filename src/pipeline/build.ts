@@ -154,8 +154,12 @@ export async function buildVersion(version: ManifestVersion, { dataDir, manifest
   }
   await writeJson(join(outDir, VERSION_FILES.meta), meta)
 
-  await rm(finalDir, { recursive: true, force: true })
+  // Swap with two renames so the API never sees a half-written version
+  const oldDir = `${finalDir}.old`
+  await rm(oldDir, { recursive: true, force: true })
+  await rename(finalDir, oldDir).catch(() => undefined)
   await rename(outDir, finalDir)
+  await rm(oldDir, { recursive: true, force: true })
   await updateIndex(dataDir, summary)
   if (!keepJar) await rm(jarFile, { force: true })
 
