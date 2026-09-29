@@ -7,7 +7,7 @@ const identifierParam = {
   type: 'object',
   required: ['identifier'],
   properties: {
-    identifier: { type: 'string', description: 'UUID (with or without dashes) or nickname', examples: ['_zaralX_', '069a79f444e94726a5befca90e38aaf5'] },
+    identifier: { type: 'string', description: 'UUID (with or without dashes) or nickname', example: '_zaralX_' },
   },
 } as const
 

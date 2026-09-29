@@ -8,7 +8,7 @@ const route: FastifyPluginAsync = async (fastify) => {
       tags: ['v1'],
       deprecated: true,
       description: 'Use /v2/minecraft/players/{identifier}/skin',
-      params: { type: 'object', required: ['identifier'], properties: { identifier: { type: 'string', examples: ['_zaralX_'] } } },
+      params: { type: 'object', required: ['identifier'], properties: { identifier: { type: 'string', example: '_zaralX_' } } },
     },
   }, async (request, reply) => {
     const { skin } = await loadSkin(fastify, request.params.identifier)

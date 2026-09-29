@@ -13,7 +13,7 @@ const route: FastifyPluginAsync = async (fastify) => {
       params: {
         type: 'object',
         required: ['item'],
-        properties: { item: { type: 'string', description: 'The item identifier', examples: ['diamond_block', 'carrot'] } },
+        properties: { item: { type: 'string', description: 'The item identifier', example: 'diamond_block' } },
       },
     },
     config: { rateLimit: { max: 5000, timeWindow: '1 minute' } },

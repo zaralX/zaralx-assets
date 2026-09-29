@@ -4,7 +4,7 @@ import { IMAGE_FORMATS } from '../utils/images'
 export const versionParam = {
   type: 'string',
   description: 'Version id, `latest` (newest release) or `latest-snapshot` (newest build of any type)',
-  examples: ['latest', '26.3', '1.21.5'],
+  example: 'latest',
 } as const
 
 export const idParam = {
@@ -17,7 +17,7 @@ export const langQuery = {
   pattern: LANG_PATTERN.source,
   default: 'en_us',
   description: 'Language used for names',
-  examples: ['en_us', 'ru_ru'],
+  example: 'en_us',
 } as const
 
 export const formatQuery = {
@@ -46,7 +46,7 @@ export const imageResponse = {
 export const textureRef = {
   type: 'object',
   properties: {
-    path: { type: 'string', examples: ['block/stone'] },
+    path: { type: 'string', example: 'block/stone' },
     url: { type: 'string' },
   },
 } as const

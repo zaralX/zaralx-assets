@@ -40,7 +40,7 @@ const route: FastifyPluginAsync = async (fastify) => {
       summary: 'Block textures',
       tags: ['blocks'],
       description: 'Block textures, separately from the rendered icon: the texture of every side in the default state, plus every texture any state uses',
-      params: { type: 'object', required: ['version', 'id'], properties: { version: versionParam, id: { ...idParam, examples: ['oak_log', 'furnace'] } } },
+      params: { type: 'object', required: ['version', 'id'], properties: { version: versionParam, id: { ...idParam, example: 'oak_log' } } },
       querystring: { type: 'object', properties: { lang: langQuery } },
       response: {
         200: {

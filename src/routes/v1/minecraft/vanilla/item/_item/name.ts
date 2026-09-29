@@ -13,8 +13,8 @@ const route: FastifyPluginAsync = async (fastify) => {
         type: 'object',
         required: ['item', 'lang'],
         properties: {
-          item: { type: 'string', examples: ['diamond_block', 'carrot'] },
-          lang: { type: 'string', examples: ['en_us', 'ru_ru'] },
+          item: { type: 'string', example: 'diamond_block' },
+          lang: { type: 'string', example: 'en_us' },
         },
       },
     },
