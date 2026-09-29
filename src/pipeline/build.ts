@@ -13,7 +13,7 @@ import type { RenderPart } from './render/item-model'
 import type { Logger } from './logger'
 
 // Bump when the output of a build changes, so `sync` rebuilds existing versions
-export const PIPELINE_VERSION = 2
+export const PIPELINE_VERSION = 3
 
 const ITEMS = 'assets/minecraft/items/'
 const BLOCKSTATES = 'assets/minecraft/blockstates/'

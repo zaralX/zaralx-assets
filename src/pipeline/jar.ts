@@ -9,6 +9,10 @@ export class JarAssets {
     return new JarAssets(new Map(Object.entries(entries)))
   }
 
+  static fromFiles(files: Record<string, Uint8Array | string>) {
+    return new JarAssets(new Map(Object.entries(files).map(([path, data]) => [path, typeof data === 'string' ? Buffer.from(data) : data])))
+  }
+
   has(path: string) {
     return this.files.has(path)
   }
