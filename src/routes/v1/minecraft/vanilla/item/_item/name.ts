@@ -1,71 +1,33 @@
-import {FastifyPluginAsync} from "fastify";
+import type { FastifyPluginAsync } from 'fastify'
+import { LANG_PATTERN } from '../../../../../../catalog/paths'
+import { useLegacyVersion } from '../../../../../../utils/http'
 
-const search_in = ["item.minecraft.%A", "block.minecraft.%A"]
-
-const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-    fastify.get('/lang/:lang/name', {
-        schema: {
-            description: 'Get the localized name of an item in a specific language',
-            params: {
-                type: 'object',
-                required: ['item', 'lang'],
-                properties: {
-                    item: {
-                        type: 'string',
-                        description: 'The item identifier',
-                        examples: ['diamond_block', 'carrot']
-                    },
-                    lang: {
-                        type: 'string',
-                        description: 'The language code',
-                        examples: ['en_us', 'ru_ru']
-                    }
-                }
-            },
-            response: {
-                200: {
-                    type: 'string',
-                    description: 'The localized item name'
-                },
-                400: {
-                    type: 'object',
-                    description: 'Bad request - unknown language or item not found',
-                    properties: {
-                        message: {
-                            type: 'string',
-                            examples: ['Unknown lang', 'Not found item name']
-                        },
-                        lang_keys: {
-                            type: 'array',
-                            items: {
-                                type: 'string'
-                            },
-                            description: 'Available language keys (only present when language is unknown)'
-                        }
-                    }
-                }
-            }
-        }
-    }, async function (request, reply) {
-        const item = (request.params as any).item
-        const lang = (request.params as any).lang
-        const lang_data = (fastify as any).lang?.[lang]
-
-        if (!lang_data) {
-            return reply.status(400).send({message: "Unknown lang", lang_keys: Object.keys((fastify as any).lang)})
-        }
-
-
-        for (const search_key of search_in) {
-            const key = search_key.replace("%A", item)
-            const value = lang_data[key]
-            if (value) {
-                return reply.status(200).send(value)
-            }
-        }
-
-        return reply.status(400).send({message: `Not found item name`})
-    })
+const route: FastifyPluginAsync = async (fastify) => {
+  fastify.get<{ Params: { item: string, lang: string } }>('/lang/:lang/name', {
+    schema: {
+      tags: ['v1'],
+      deprecated: true,
+      description: 'Use /v2/minecraft/{version}/items/{id}?lang={lang}',
+      params: {
+        type: 'object',
+        required: ['item', 'lang'],
+        properties: {
+          item: { type: 'string', examples: ['diamond_block', 'carrot'] },
+          lang: { type: 'string', examples: ['en_us', 'ru_ru'] },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const { data } = await useLegacyVersion(fastify)
+    const { item, lang } = request.params
+    if (!LANG_PATTERN.test(lang) || !data.langIndex[lang]) {
+      return reply.status(400).send({ message: 'Unknown lang', lang_keys: Object.keys(data.langIndex).sort() })
+    }
+    const translations = await fastify.catalog.lang(data, lang)
+    const name = translations[`item.minecraft.${item}`] ?? translations[`block.minecraft.${item}`]
+    if (!name) return reply.status(400).send({ message: 'Not found item name' })
+    return reply.type('text/plain; charset=utf-8').send(name)
+  })
 }
 
 export default route

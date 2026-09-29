@@ -1,39 +1,46 @@
 {
   "name": "zaralx-assets",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "zaralX Assets - https://assets.zaralx.ru",
-  "main": "app.ts",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "test": "npm run build:ts && tsc -p test/tsconfig.json && c8 node --test -r ts-node/register \"test/**/*.ts\"",
-    "start": "npm run build:ts && fastify start -P dist/app.js",
-    "build:ts": "tsc",
-    "watch:ts": "tsc -w",
-    "dev": "npm run build:ts && concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:watch:ts\" \"npm:dev:start\"",
-    "dev:start": "fastify start --ignore-watch=.ts$ -w -P dist/app.js",
-    "clear-cache-windows": "rmdir /s /q dist"
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
+    "pipeline": "tsx --env-file-if-exists=.env src/pipeline/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "node --import tsx --test \"test/unit/**/*.test.ts\"",
+    "test:golden": "node --import tsx --test \"test/golden/*.test.ts\""
   },
   "keywords": [],
   "author": "zaralX",
   "license": "MIT",
   "dependencies": {
-    "@fastify/autoload": "^6.0.0",
-    "@fastify/compress": "^8.0.1",
+    "@fastify/autoload": "^6.3.1",
+    "@fastify/compress": "^8.1.0",
     "@fastify/cors": "^11.1.0",
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/redis": "^7.1.0",
-    "@fastify/sensible": "^6.0.0",
+    "@fastify/sensible": "^6.0.3",
     "@fastify/swagger": "^9.6.1",
-    "axios": "^1.12.2",
-    "fastify": "^5.0.0",
-    "fastify-cli": "^7.4.0",
-    "fastify-plugin": "^5.0.0",
+    "fastify": "^5.6.1",
+    "fastify-plugin": "^5.1.0",
+    "fflate": "^0.8.2",
     "sharp": "^0.34.5"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.5.0",
     "@types/node": "^22.18.8",
-    "concurrently": "^9.0.0",
-    "fastify-tsconfig": "^3.0.0",
-    "ts-node": "^10.4.0",
-    "typescript": "~5.8.2"
+    "eslint": "^10.11.0",
+    "tsx": "^4.20.6",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.2"
   }
 }

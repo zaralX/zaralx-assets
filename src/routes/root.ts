@@ -1,46 +1,39 @@
-import {FastifyPluginAsync} from 'fastify'
+import type { FastifyPluginAsync } from 'fastify'
+import { config } from '../config'
+import { publicUrl } from '../utils/http'
 
-const root: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-    fastify.get('/', {
-        schema: {
-            description: 'Get API information and version details',
-            response: {
-                200: {
-                    type: 'object',
-                    properties: {
-                        message: {
-                            type: 'string',
-                            description: 'Project information message'
-                        },
-                        sources: {
-                            type: 'object',
-                            properties: {
-                                vanilla: {
-                                    type: 'object',
-                                    properties: {
-                                        version: {
-                                            type: 'string',
-                                            description: 'Minecraft vanilla version',
-                                            example: '1.21.5'
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }, async function (request, reply) {
-        return {
-            message: "Open source project. Github: https://github.com/zaralX/zaralx-assets",
+const root: FastifyPluginAsync = async (fastify) => {
+  fastify.get('/', {
+    schema: {
+      description: 'API information',
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' },
+            docs: { type: 'string' },
+            versions: { type: 'string' },
+            latest: { type: ['string', 'null'] },
             sources: {
-                vanilla: {
-                    version: "1.21.5"
-                }
-            }
-        }
-    })
+              type: 'object',
+              description: 'v1 field: the version the v1 routes serve',
+              properties: { vanilla: { type: 'object', properties: { version: { type: 'string' } } } },
+            },
+          },
+        },
+      },
+    },
+  }, async () => {
+    const latest = await fastify.catalog.resolve('latest')
+    const legacy = await fastify.catalog.resolve(config.legacyVersion) ?? latest
+    return {
+      message: 'Open source project. Github: https://github.com/zaralX/zaralx-assets',
+      docs: publicUrl('/swagger'),
+      versions: publicUrl('/v2/minecraft/versions'),
+      latest: latest?.id ?? null,
+      sources: { vanilla: { version: legacy?.id ?? config.legacyVersion } },
+    }
+  })
 }
 
 export default root
