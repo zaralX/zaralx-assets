@@ -20,7 +20,7 @@ const route: FastifyPluginAsync = async (fastify) => {
       params: { type: 'object', required: ['version'], properties: { version: versionParam } },
       querystring: {
         type: 'object',
-        properties: { prefix: { type: 'string', maxLength: 128, examples: ['block/', 'item/', 'entity/chest/'] } },
+        properties: { prefix: { type: 'string', maxLength: 128, example: 'block/' } },
       },
       response: {
         200: {
@@ -65,7 +65,7 @@ const route: FastifyPluginAsync = async (fastify) => {
       params: {
         type: 'object',
         required: ['version', '*'],
-        properties: { 'version': versionParam, '*': { type: 'string', examples: ['block/stone.png', 'item/diamond.webp'] } },
+        properties: { 'version': versionParam, '*': { type: 'string', example: 'block/stone.png' } },
       },
       querystring: {
         type: 'object',

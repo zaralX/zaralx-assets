@@ -6,6 +6,8 @@ async function main() {
   const fastify = Fastify({
     logger: { level: config.logLevel },
     trustProxy: config.trustProxy,
+    // OpenAPI annotation, not a validation keyword
+    ajv: { customOptions: { keywords: ['example'] } },
   })
   await fastify.register(app)
 

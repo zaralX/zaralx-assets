@@ -6,6 +6,7 @@ const root: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', {
     schema: {
       summary: 'API info',
+      tags: ['versions'],
       description: 'API information',
       response: {
         200: {

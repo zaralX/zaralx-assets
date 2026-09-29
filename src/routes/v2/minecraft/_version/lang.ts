@@ -28,7 +28,7 @@ const route: FastifyPluginAsync = async (fastify) => {
       params: {
         type: 'object',
         required: ['version', 'code'],
-        properties: { version: versionParam, code: { type: 'string', pattern: LANG_PATTERN.source, examples: ['en_us', 'ru_ru'] } },
+        properties: { version: versionParam, code: { type: 'string', pattern: LANG_PATTERN.source, example: 'en_us' } },
       },
       response: { 200: { type: 'object', additionalProperties: { type: 'string' } } },
     },

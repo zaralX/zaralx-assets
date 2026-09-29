@@ -4,7 +4,7 @@ import { loadSkin, sendPng } from '../../../../../players/http'
 
 const FACE_SIZE = 256
 
-const params = { type: 'object', required: ['identifier'], properties: { identifier: { type: 'string', examples: ['_zaralX_'] } } } as const
+const params = { type: 'object', required: ['identifier'], properties: { identifier: { type: 'string', example: '_zaralX_' } } } as const
 
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { identifier: string } }>('/face/:identifier', {

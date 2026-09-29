@@ -9,7 +9,7 @@ const route: FastifyPluginAsync = async (fastify) => {
       tags: ['v1'],
       deprecated: true,
       description: 'Use /v2/minecraft/{version}/lang/{code}',
-      params: { type: 'object', required: ['id'], properties: { id: { type: 'string', examples: ['en_us', 'ru_ru'] } } },
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'string', example: 'en_us' } } },
     },
   }, async (request, reply) => {
     const { data } = await useLegacyVersion(fastify)
