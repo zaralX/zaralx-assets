@@ -1,17 +1,38 @@
-version: "3.9"
-
 services:
-  service:
+  api:
     image: ghcr.io/zaralx/zaralx-assets:latest
     restart: unless-stopped
     environment:
-      - REDIS_HOST=redis
+      REDIS_HOST: redis
+      PUBLIC_URL: ${PUBLIC_URL:-https://assets.zaralx.ru/api}
+      # Behind a reverse proxy (Coolify, nginx) the client address comes from X-Forwarded-For
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
-      - "${SERVER_PORT:-3000}:${FASTIFY_PORT:-3000}"
+      - "${SERVER_PORT:-3000}:3000"
+    volumes:
+      - assets_data:/data
     networks:
       - zassets
     depends_on:
       - redis
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Builds all versions on first start, about a minute each
+  worker:
+    image: ghcr.io/zaralx/zaralx-assets:latest
+    restart: unless-stopped
+    command: ["node", "dist/pipeline/cli.js", "watch"]
+    environment:
+      PIPELINE_MIN_VERSION: ${PIPELINE_MIN_VERSION:-1.21.4}
+      PIPELINE_TYPES: ${PIPELINE_TYPES:-release}
+      PIPELINE_INTERVAL_MINUTES: ${PIPELINE_INTERVAL_MINUTES:-60}
+    volumes:
+      - assets_data:/data
 
   redis:
     image: redis:7-alpine
@@ -27,4 +48,5 @@ networks:
     driver: bridge
 
 volumes:
+  assets_data:
   redis_data:

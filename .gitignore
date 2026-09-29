@@ -63,3 +63,11 @@ test/types/index.js
 
 # compiled app
 dist
+
+# pipeline output
+data
+
+# env
+.env
+.env.*
+!.env.example
