@@ -80,6 +80,15 @@ format changes, also raise `DATA_FORMAT` in `src/catalog/types.ts`: the API skip
 `assets_data` volume. On first start the worker builds all releases since `PIPELINE_MIN_VERSION`,
 about a minute each.
 
+### Coolify, Dokploy and similar
+
+1. Create a Docker Compose resource from this repository (or paste `docker-compose.yml`).
+2. Attach your domain to the `api` service, port `3000`. Remove `ports` if the host port is taken.
+3. Set `PUBLIC_URL` to the public address of the API, e.g. `https://assets.example.com`.
+4. Deploy. The API answers 404 until the worker has built the first version, a minute or two.
+
+The image is `ghcr.io/zaralx/zaralx-assets:latest`, built on every push to `master`.
+
 ## Contributing
 
 Fork the repo, create a branch and open a pull request.
