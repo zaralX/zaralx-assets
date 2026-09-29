@@ -4,10 +4,22 @@ import { evaluateItemModel, type RenderPart } from './item-model'
 import { ModelResolver } from './models'
 import { renderScene, type SceneLayer } from './rasterizer'
 import { specialQuads } from './special'
+import { Pose } from './special/pose'
+import type { Quad } from './geometry'
 import { TextureStore } from './textures'
 import type { ItemDefinition, SpecialModel } from './types'
 
 export const ICON_SIZE = 256
+
+function transformQuads(quads: Quad[], transformations: Parameters<Pose['transform']>[0][]) {
+  const pose = new Pose()
+  for (const t of transformations) pose.transform(t)
+  return quads.map(q => ({
+    ...q,
+    positions: q.positions.map(p => pose.point([p[0] / 16, p[1] / 16, p[2] / 16]).map(c => c * 16)) as Quad['positions'],
+    normal: pose.normal(q.normal),
+  }))
+}
 
 export interface ItemRenderResult {
   // RGBA, ICON_SIZE x ICON_SIZE; undefined when the item has nothing to draw
@@ -40,15 +52,16 @@ export class ItemRenderer {
     for (const part of parts) {
       if (part.kind === 'model') {
         const model = this.models.get(part.model)
-        const quads = model.builtin === 'minecraft:builtin/generated'
+        let quads = model.builtin === 'minecraft:builtin/generated'
           ? await generatedQuads(this.models, this.textures, model, part.tints)
           : await elementQuads(this.models, this.textures, model, part.tints)
+        if (part.transformations.length) quads = transformQuads(quads, part.transformations)
         layers.push({ transform: model.display.gui ?? {}, guiLight: model.guiLight, quads, cullBackFaces: true })
         continue
       }
 
       const base = this.models.get(part.base)
-      const quads = await specialQuads(this, part.model)
+      const quads = await specialQuads(this, part.model, part.transformations)
       if (!quads) {
         unsupported.push(part.model)
         continue

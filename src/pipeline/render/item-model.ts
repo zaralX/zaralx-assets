@@ -1,9 +1,11 @@
-import type { ItemModelNode, Rgb, SpecialModel } from './types'
+import type { Transformation } from './special/pose'
 import type { TextureStore } from './textures'
+import type { ItemModelNode, Rgb, SpecialModel } from './types'
 
+// Transformations are listed outermost first
 export type RenderPart
-  = | { kind: 'model', model: string, tints: Rgb[] }
-    | { kind: 'special', base: string, model: SpecialModel }
+  = | { kind: 'model', model: string, tints: Rgb[], transformations: Transformation[] }
+    | { kind: 'special', base: string, model: SpecialModel, transformations: Transformation[] }
 
 const WHITE: Rgb = [255, 255, 255]
 
@@ -47,25 +49,27 @@ export async function evaluateTint(textures: TextureStore, tint: ItemModelNode):
   }
 }
 
-export async function evaluateItemModel(textures: TextureStore, node: ItemModelNode): Promise<RenderPart[]> {
+export async function evaluateItemModel(textures: TextureStore, node: ItemModelNode, outer: Transformation[] = []): Promise<RenderPart[]> {
+  const transformations = node.transformation ? [...outer, node.transformation as Transformation] : outer
+  const child = (next: ItemModelNode) => evaluateItemModel(textures, next, transformations)
   switch (stripNamespace(node.type)) {
     case 'model': {
       const tints = await Promise.all(((node.tints ?? []) as ItemModelNode[]).map(t => evaluateTint(textures, t)))
-      return [{ kind: 'model', model: node.model as string, tints }]
+      return [{ kind: 'model', model: node.model as string, tints, transformations }]
     }
     case 'composite': {
-      const parts = await Promise.all((node.models as ItemModelNode[]).map(m => evaluateItemModel(textures, m)))
+      const parts = await Promise.all((node.models as ItemModelNode[]).map(child))
       return parts.flat()
     }
     case 'condition':
-      return evaluateItemModel(textures, node.on_false as ItemModelNode)
+      return child(node.on_false as ItemModelNode)
     case 'select': {
       if (node.property === 'minecraft:display_context') {
         const match = (node.cases as { when: string | string[], model: ItemModelNode }[])
           .find(c => ([] as string[]).concat(c.when).includes(GUI_CONTEXT))
-        if (match) return evaluateItemModel(textures, match.model)
+        if (match) return child(match.model)
       }
-      return node.fallback ? evaluateItemModel(textures, node.fallback as ItemModelNode) : []
+      return node.fallback ? child(node.fallback as ItemModelNode) : []
     }
     case 'range_dispatch': {
       const scale = (node.scale as number | undefined) ?? 1
@@ -74,10 +78,10 @@ export async function evaluateItemModel(textures: TextureStore, node: ItemModelN
         if (entry.threshold <= RANGE_VALUE * scale) picked = entry.model
       }
       picked ??= node.fallback as ItemModelNode | undefined
-      return picked ? evaluateItemModel(textures, picked) : []
+      return picked ? child(picked) : []
     }
     case 'special':
-      return [{ kind: 'special', base: node.base as string, model: node.model as SpecialModel }]
+      return [{ kind: 'special', base: node.base as string, model: node.model as SpecialModel, transformations }]
     default:
       return []
   }
