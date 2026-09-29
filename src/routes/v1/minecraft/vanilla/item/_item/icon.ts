@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { ID_PATTERN } from '../../../../../../catalog/paths'
-import { sendImage, useLegacyVersion } from '../../../../../../utils/http'
+import { hasIcon } from '../../../../../../catalog/types'
+import { sendImage, useLegacyVersion, versionCaching } from '../../../../../../utils/http'
 
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { item: string } }>('/icon', {
@@ -18,8 +19,8 @@ const route: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     const { data, alias } = await useLegacyVersion(fastify)
     const item = ID_PATTERN.test(request.params.item) ? data.items.get(request.params.item) : undefined
-    if (!item?.icon) return reply.code(404).send({ error: 'Item not found' })
-    return sendImage(request, reply, { file: fastify.catalog.iconFile(data.meta.id, item.id, 256), format: 'webp' }, { alias, builtAt: data.meta.builtAt })
+    if (!item || !hasIcon(item)) return reply.code(404).send({ error: 'Item not found' })
+    return sendImage(request, reply, { file: fastify.catalog.iconFile(item, 256)!, format: 'webp' }, item.icons[256]!, versionCaching(alias))
   })
 }
 

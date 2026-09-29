@@ -1,8 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify'
 import type { VersionData } from '../../../../catalog/catalog'
-import { ICON_SIZES, type ItemEntry } from '../../../../catalog/types'
+import { hasIcon, ICON_SIZES, type ItemEntry } from '../../../../catalog/types'
 import { formatQuery, idParam, imageResponse, langQuery, sizeQuery, textureRef, versionParam } from '../../../../schemas/v2'
-import { publicUrl, sendImage, setCaching, useLang, useVersion } from '../../../../utils/http'
+import { blobUrl, publicUrl, sendImage, setCaching, useLang, useVersion, versionCaching } from '../../../../utils/http'
 import type { ImageFormat } from '../../../../utils/images'
 
 interface ItemParams {
@@ -21,7 +21,7 @@ const itemSummary = {
 } as const
 
 function iconUrl(version: string, item: ItemEntry) {
-  return item.icon ? publicUrl(`/v2/minecraft/${version}/items/${item.id}/icon`) : null
+  return hasIcon(item) ? publicUrl(`/v2/minecraft/${version}/items/${item.id}/icon`) : null
 }
 
 function describe(data: VersionData, item: ItemEntry, name: (key: string) => string) {
@@ -33,7 +33,8 @@ function describe(data: VersionData, item: ItemEntry, name: (key: string) => str
     category: data.itemTabs.get(item.id),
     block: item.block ? publicUrl(`/v2/minecraft/${version}/blocks/${item.id}`) : null,
     icon: iconUrl(version, item),
-    missingIconReason: item.icon ? undefined : data.meta.missingIcons[item.id],
+    missingIconReason: hasIcon(item) ? undefined : data.meta.missingIcons[item.id],
+    iconBlobs: Object.fromEntries(Object.entries(item.icons).map(([size, hash]) => [size, blobUrl(hash, 'webp')])),
     textures: item.textures.map(path => ({ path, url: publicUrl(`/v2/minecraft/${version}/textures/${path}.png`) })),
   }
 }
@@ -84,6 +85,7 @@ const route: FastifyPluginAsync = async (fastify) => {
             translationKey: { type: 'string' },
             block: { type: ['string', 'null'] },
             missingIconReason: { type: 'string' },
+            iconBlobs: { type: 'object', description: 'Content-addressed icon per size, shared by all versions', additionalProperties: { type: 'string' } },
             textures: { type: 'array', items: textureRef },
           },
         },
@@ -111,14 +113,15 @@ const route: FastifyPluginAsync = async (fastify) => {
     const { data, alias } = await useVersion(fastify, request.params.version)
     const item = data.items.get(request.params.id)
     if (!item) throw fastify.httpErrors.notFound(`Unknown item ${request.params.id}`)
-    if (!item.icon) throw fastify.httpErrors.notFound(`No icon for ${item.id}: ${data.meta.missingIcons[item.id] ?? 'unknown reason'}`)
+    if (!hasIcon(item)) throw fastify.httpErrors.notFound(`No icon for ${item.id}: ${data.meta.missingIcons[item.id] ?? 'unknown reason'}`)
     const size = request.query.size ?? 256
     const source = ICON_SIZES.find(s => s >= size) ?? ICON_SIZES.at(-1)!
+    const hash = item.icons[source]!
     return sendImage(request, reply, {
-      file: fastify.catalog.iconFile(data.meta.id, item.id, source),
+      file: fastify.catalog.iconFile(item, source)!,
       width: size === source ? undefined : size,
       format: request.query.format,
-    }, { alias, builtAt: data.meta.builtAt })
+    }, hash, versionCaching(alias))
   })
 }
 

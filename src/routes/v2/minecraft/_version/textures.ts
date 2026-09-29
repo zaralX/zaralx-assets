@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { TEXTURE_PATH_PATTERN } from '../../../../catalog/paths'
 import { formatQuery, imageResponse, sizeQuery, versionParam } from '../../../../schemas/v2'
-import { publicUrl, sendImage, setCaching, useVersion } from '../../../../utils/http'
+import { blobUrl, publicUrl, sendImage, setCaching, useVersion, versionCaching } from '../../../../utils/http'
 import { IMAGE_FORMATS, type ImageFormat } from '../../../../utils/images'
 
 interface TextureQuery {
@@ -32,6 +32,7 @@ const route: FastifyPluginAsync = async (fastify) => {
               height: { type: 'integer' },
               frames: { type: 'integer', description: 'Animation frames stacked vertically' },
               url: { type: 'string' },
+              blob: { type: 'string', description: 'Content-addressed file, shared by all versions' },
             },
           },
         },
@@ -43,7 +44,14 @@ const route: FastifyPluginAsync = async (fastify) => {
     setCaching(reply, alias, data.meta.builtAt, `textures:${prefix}`)
     return [...data.textures.values()]
       .filter(t => t.path.startsWith(prefix))
-      .map(t => ({ ...t, url: publicUrl(`/v2/minecraft/${data.meta.id}/textures/${t.path}.png`) }))
+      .map(t => ({
+        path: t.path,
+        width: t.width,
+        height: t.height,
+        frames: t.frames,
+        url: publicUrl(`/v2/minecraft/${data.meta.id}/textures/${t.path}.png`),
+        blob: blobUrl(t.hash, 'png'),
+      }))
   })
 
   fastify.get<{ Params: { 'version': string, '*': string }, Querystring: TextureQuery }>('/textures/*', {
@@ -84,11 +92,11 @@ const route: FastifyPluginAsync = async (fastify) => {
       frame = { index, width: texture.width, height: texture.height / texture.frames }
     }
     return sendImage(request, reply, {
-      file: fastify.catalog.textureFile(data.meta.id, path),
+      file: fastify.catalog.textureFile(texture),
       width: request.query.size,
       format,
       frame,
-    }, { alias, builtAt: data.meta.builtAt })
+    }, texture.hash, versionCaching(alias))
   })
 }
 

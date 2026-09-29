@@ -1,8 +1,9 @@
-import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { readFile, stat } from 'node:fs/promises'
+import { join } from 'node:path'
 import { assetObjectUrl, fetchBuffer, sha1 } from '../mojang'
-import { iconFile, langFile, textureFile, VERSION_FILES, versionDir, versionsIndexFile } from './paths'
-import type { BlockEntry, CreativeTabs, ItemEntry, LangIndex, TextureEntry, VersionIndex, VersionMeta, VersionSummary } from './types'
+import { blobFile, writeBlobFile } from './blobs'
+import { VERSION_FILES, versionDir, versionsIndexFile } from './paths'
+import { DATA_FORMAT, type BlockEntry, type CreativeTabs, type IconSize, type ItemEntry, type LangIndex, type TextureEntry, type VersionIndex, type VersionMeta, type VersionSummary } from './types'
 
 export const LATEST = 'latest'
 export const LATEST_SNAPSHOT = 'latest-snapshot'
@@ -30,7 +31,7 @@ export class Catalog {
 
   async versions() {
     await this.refreshIndex()
-    return this.index.versions
+    return this.index.versions.filter(v => v.pipeline >= DATA_FORMAT)
   }
 
   async resolve(version: string): Promise<VersionSummary | undefined> {
@@ -52,50 +53,44 @@ export class Catalog {
     return pending
   }
 
-  dir(version: string) {
-    return versionDir(this.dataDir, version)
+  iconFile(item: ItemEntry, size: IconSize) {
+    const hash = item.icons[size]
+    return hash ? blobFile(this.dataDir, hash, 'webp') : undefined
   }
 
-  iconFile(version: string, item: string, size: number) {
-    return iconFile(this.dir(version), item, size)
+  textureFile(texture: TextureEntry) {
+    return blobFile(this.dataDir, texture.hash, 'png')
   }
 
-  textureFile(version: string, path: string) {
-    return textureFile(this.dir(version), path)
-  }
-
-  // Languages other than en_us are downloaded on first use
+  // Languages other than en_us are downloaded on first use; versions share identical files
   lang(version: VersionData, code: string) {
-    const key = `${version.meta.id}/${code}`
-    let pending = this.langs.get(key)
+    const object = version.langIndex[code]
+    if (!object) return Promise.reject(new Error(`Unknown language ${code}`))
+    let pending = this.langs.get(object.hash)
     if (!pending) {
-      pending = this.readLang(version, code)
-      pending.catch(() => this.langs.delete(key))
-      this.langs.set(key, pending)
+      pending = this.readLang(object.hash)
+      pending.catch(() => this.langs.delete(object.hash))
+      this.langs.set(object.hash, pending)
     }
     return pending
   }
 
-  private async readLang(version: VersionData, code: string) {
-    const file = langFile(this.dir(version.meta.id), code)
+  private async readLang(hash: string) {
+    const file = blobFile(this.dataDir, hash, 'json')
+    let data: Buffer
     try {
-      return JSON.parse(await readFile(file, 'utf8')) as Record<string, string>
+      data = await readFile(file)
     }
     catch {
-      // not downloaded yet
+      data = await fetchBuffer(assetObjectUrl(hash))
+      if (sha1(data) !== hash) throw new Error(`sha1 mismatch for language ${hash}`)
+      await writeBlobFile(file, data)
     }
-    const object = version.langIndex[code]
-    if (!object) throw new Error(`Unknown language ${code}`)
-    const data = await fetchBuffer(assetObjectUrl(object.hash))
-    if (sha1(data) !== object.hash) throw new Error(`sha1 mismatch for language ${code}`)
-    await mkdir(dirname(file), { recursive: true })
-    await writeFile(`${file}.tmp`, data)
-    await rename(`${file}.tmp`, file)
     return JSON.parse(data.toString('utf8')) as Record<string, string>
   }
 
   private async read(id: string): Promise<VersionData> {
-    const dir = this.dir(id)
+    const dir = versionDir(this.dataDir, id)
     const json = async <T>(name: string) => JSON.parse(await readFile(join(dir, name), 'utf8')) as T
     const [meta, items, blocks, textures, creativeTabs, langIndex] = await Promise.all([
       json<VersionMeta>(VERSION_FILES.meta),
@@ -105,7 +100,6 @@ export class Catalog {
       json<CreativeTabs>(VERSION_FILES.creativeTabs),
       json<LangIndex>(VERSION_FILES.langIndex),
     ])
-    langIndex.en_us ??= { hash: '', size: 0 }
     const itemTabs = new Map<string, string>()
     for (const [tab, ids] of Object.entries(creativeTabs)) {
       for (const id of ids) if (!itemTabs.has(id)) itemTabs.set(id, tab)

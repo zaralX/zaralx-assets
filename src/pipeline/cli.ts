@@ -6,7 +6,7 @@ import sharp from 'sharp'
 import { config } from '../config'
 import { jarCacheDir } from '../catalog/paths'
 import { downloadVerified, fetchJson, fetchManifest, type ManifestVersion, type VersionJson } from '../mojang'
-import { buildVersion, PIPELINE_VERSION, readIndex, UnsupportedVersionError } from './build'
+import { buildVersion, PIPELINE_VERSION, readIndex, removeUnusedBlobs, UnsupportedVersionError } from './build'
 import { JarAssets } from './jar'
 import { ItemRenderer } from './render'
 import { consoleLogger as log } from './logger'
@@ -17,6 +17,7 @@ const USAGE = `Usage: pipeline <command>
   sync [--force]           build every eligible version that is missing or outdated
   watch                    run sync every PIPELINE_INTERVAL_MINUTES
   build <version...>       build the given versions, even if not eligible
+  gc                       delete blobs no version refers to
   render <version> <item> [--size 256] [--out file.png]
                            render one icon, for debugging`
 
@@ -49,7 +50,13 @@ async function build(targets: ManifestVersion[], manifest: ManifestVersion[]) {
       log.error(`${version.id}: build failed: ${reason}`)
     }
   }
+  if (targets.length) await gc()
   return failed
+}
+
+async function gc() {
+  const { removed, kept } = await removeUnusedBlobs(config.dataDir)
+  log.info(`gc: removed ${removed} blobs, kept ${kept}`)
 }
 
 async function main() {
@@ -93,6 +100,10 @@ async function main() {
         }
         await sleep(config.pipeline.intervalMinutes * 60_000)
       }
+    }
+    case 'gc': {
+      await gc()
+      return 0
     }
     case 'build': {
       if (!args.length) break

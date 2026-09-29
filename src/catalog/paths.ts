@@ -18,20 +18,8 @@ export const VERSION_FILES = {
   blocks: 'blocks.json',
   textures: 'textures.json',
   creativeTabs: 'creative-tabs.json',
-  langIndex: join('lang', 'index.json'),
+  langIndex: 'lang.json',
 } as const
-
-export function langFile(dir: string, code: string) {
-  return join(dir, 'lang', `${code}.json`)
-}
-
-export function iconFile(dir: string, item: string, size: number) {
-  return join(dir, 'icons', String(size), `${item}.webp`)
-}
-
-export function textureFile(dir: string, path: string) {
-  return join(dir, 'textures', `${path}.png`)
-}
 
 export const ID_PATTERN = /^[a-z0-9_][a-z0-9_.-]*$/
 export const TEXTURE_PATH_PATTERN = /^[a-z0-9_][a-z0-9_.-]*(\/[a-z0-9_][a-z0-9_.-]*)*$/

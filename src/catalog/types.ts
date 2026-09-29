@@ -28,7 +28,8 @@ export interface ItemEntry {
   id: string
   translationKey: string
   block: boolean
-  icon: boolean
+  // Blob hash per icon size
+  icons: Partial<Record<IconSize, string>>
   textures: string[]
 }
 
@@ -47,6 +48,8 @@ export interface TextureEntry {
   width: number
   height: number
   frames: number
+  hash: string
+  mcmeta?: string
 }
 
 export type LangIndex = Record<string, { hash: string, size: number }>
@@ -56,3 +59,12 @@ export type CreativeTabs = Record<string, string[]>
 export const UNCATEGORIZED = 'uncategorized'
 
 export const ICON_SIZES = [16, 32, 64, 128, 256] as const
+
+export type IconSize = typeof ICON_SIZES[number]
+
+export function hasIcon(item: ItemEntry) {
+  return item.icons[256] !== undefined
+}
+
+// Oldest pipeline build whose files the API can read
+export const DATA_FORMAT = 4
