@@ -37,6 +37,12 @@ export const config = {
     types: list(env.PIPELINE_TYPES, ['release']),
     intervalMinutes: int(env.PIPELINE_INTERVAL_MINUTES, 60),
     keepJars: env.PIPELINE_KEEP_JARS === 'true',
+    // github: download builds published by the data workflow, build: render versions locally
+    source: env.PIPELINE_SOURCE === 'build' ? 'build' as const : 'github' as const,
+    repo: env.PIPELINE_REPO ?? 'zaralX/zaralx-assets',
+    // Overrides the GitHub release download URL, e.g. for a mirror
+    releaseUrl: env.PIPELINE_RELEASE_URL,
+    prefetchLangs: list(env.PIPELINE_PREFETCH_LANGS, ['ru_ru']),
   },
 
   legacyVersion: env.LEGACY_VERSION ?? '1.21.5',

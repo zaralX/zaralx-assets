@@ -5,25 +5,32 @@ import { parseArgs } from 'node:util'
 import sharp from 'sharp'
 import { config } from '../config'
 import { jarCacheDir } from '../catalog/paths'
+import type { VersionSummary } from '../catalog/types'
 import { downloadVerified, fetchJson, fetchManifest, type ManifestVersion, type VersionJson } from '../mojang'
 import { buildVersion, PIPELINE_VERSION, readIndex, removeUnusedBlobs, UnsupportedVersionError } from './build'
 import { JarAssets } from './jar'
 import { ItemRenderer } from './render'
 import { consoleLogger as log } from './logger'
+import { packData, pullRelease, releaseBaseUrl, releaseTag } from './release'
 
 const USAGE = `Usage: pipeline <command>
 
-  list                     versions eligible for building and their state
+  watch                    keep versions up to date, from GitHub or by building (PIPELINE_SOURCE)
+  pull                     import versions published on GitHub
   sync [--force]           build every eligible version that is missing or outdated
-  watch                    run sync every PIPELINE_INTERVAL_MINUTES
   build <version...>       build the given versions, even if not eligible
+  list                     versions eligible for building and their state
+  pack <dir>               write data.zip and index.json for publishing
+  release-tag              print the GitHub release tag of this pipeline version
   gc                       delete blobs no version refers to
   render <version> <item> [--size 256] [--out file.png]
                            render one icon, for debugging`
 
-function eligible(versions: ManifestVersion[]) {
+type Version = Pick<ManifestVersion, 'id' | 'type' | 'releaseTime'>
+
+function eligible<T extends Version>(versions: T[]) {
   const min = versions.find(v => v.id === config.pipeline.minVersion)
-  if (!min) throw new Error(`PIPELINE_MIN_VERSION ${config.pipeline.minVersion} is not in the version manifest`)
+  if (!min) throw new Error(`PIPELINE_MIN_VERSION ${config.pipeline.minVersion} is not in the version list`)
   return versions.filter(v => config.pipeline.types.includes(v.type) && v.releaseTime >= min.releaseTime)
 }
 
@@ -42,7 +49,8 @@ async function build(targets: ManifestVersion[], manifest: ManifestVersion[]) {
   let failed = 0
   for (const version of [...targets].reverse()) {
     try {
-      await buildVersion(version, { dataDir: config.dataDir, manifest, keepJar: config.pipeline.keepJars, log })
+      const { dataDir, pipeline } = config
+      await buildVersion(version, { dataDir, manifest, keepJar: pipeline.keepJars, prefetchLangs: pipeline.prefetchLangs, log })
     }
     catch (err) {
       failed++
@@ -52,6 +60,23 @@ async function build(targets: ManifestVersion[], manifest: ManifestVersion[]) {
   }
   if (targets.length) await gc()
   return failed
+}
+
+async function sync(force: boolean) {
+  const { manifest, targets } = await pending(force)
+  log.info(targets.length ? `building ${targets.map(v => v.id).join(', ')}` : 'everything is up to date')
+  return build(targets, manifest)
+}
+
+async function pull() {
+  const imported = await pullRelease({
+    dataDir: config.dataDir,
+    baseUrl: releaseBaseUrl(config.pipeline.repo, config.pipeline.releaseUrl),
+    log,
+    accept: (version: VersionSummary, all: VersionSummary[]) => eligible(all).includes(version),
+  })
+  if (imported.length) await gc()
+  return imported
 }
 
 async function gc() {
@@ -71,6 +96,30 @@ async function main() {
   const [command, ...args] = positionals
 
   switch (command) {
+    case 'watch': {
+      const { source, repo, releaseUrl, intervalMinutes } = config.pipeline
+      log.info(source === 'github'
+        ? `pulling ${releaseBaseUrl(repo, releaseUrl)} every ${intervalMinutes} min`
+        : `building new versions every ${intervalMinutes} min`)
+      for (;;) {
+        try {
+          if (source === 'github') await pull()
+          else await sync(false)
+        }
+        catch (err) {
+          log.error(`update failed: ${(err as Error).message}`)
+        }
+        // Until the first data arrives, check more often
+        const empty = (await readIndex(config.dataDir)).versions.length === 0
+        await sleep((empty ? Math.min(5, intervalMinutes) : intervalMinutes) * 60_000)
+      }
+    }
+    case 'pull': {
+      await pull()
+      return 0
+    }
+    case 'sync':
+      return await sync(values.force) ? 1 : 0
     case 'list': {
       const { manifest, built } = await pending(false)
       for (const v of eligible(manifest)) {
@@ -80,31 +129,20 @@ async function main() {
       }
       return 0
     }
-    case 'sync': {
-      const { manifest, targets } = await pending(values.force)
-      log.info(targets.length ? `building ${targets.map(v => v.id).join(', ')}` : 'everything is up to date')
-      return await build(targets, manifest) ? 1 : 0
-    }
-    case 'watch': {
-      log.info(`watching for new versions every ${config.pipeline.intervalMinutes} min`)
-      for (;;) {
-        try {
-          const { manifest, targets } = await pending(false)
-          if (targets.length) {
-            log.info(`building ${targets.map(v => v.id).join(', ')}`)
-            await build(targets, manifest)
-          }
-        }
-        catch (err) {
-          log.error(`sync failed: ${(err as Error).message}`)
-        }
-        await sleep(config.pipeline.intervalMinutes * 60_000)
-      }
+    case 'pack': {
+      const [outDir] = args
+      if (!outDir) break
+      const index = await packData(config.dataDir, outDir)
+      log.info(`packed ${index.versions.length} versions, ${(index.size / 1e6).toFixed(1)} MB`)
+      return 0
     }
     case 'gc': {
       await gc()
       return 0
     }
+    case 'release-tag':
+      console.log(releaseTag())
+      return 0
     case 'build': {
       if (!args.length) break
       const manifest = (await fetchManifest()).versions

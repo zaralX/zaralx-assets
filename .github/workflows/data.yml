@@ -1,0 +1,65 @@
+name: Data
+
+# Builds new Minecraft versions and publishes them as a release that pipeline workers download
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - src/**
+      - resources/**
+      - package.json
+      - pnpm-lock.yaml
+      - .github/workflows/data.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data
+  cancel-in-progress: false
+
+jobs:
+  data:
+    runs-on: ubuntu-latest
+    env:
+      DATA_DIR: data
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Restore published data
+        run: pnpm pipeline pull
+
+      - name: Build new versions
+        id: sync
+        run: |
+          before=$(sha1sum data/versions.json 2>/dev/null || true)
+          pnpm pipeline sync
+          after=$(sha1sum data/versions.json)
+          if [ "$before" != "$after" ]; then echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Compare icons with in-game screenshots
+        if: steps.sync.outputs.changed == 'true'
+        run: pnpm test:golden
+
+      - name: Publish
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(pnpm -s pipeline release-tag)
+          pnpm pipeline pack release
+          gh release view "$tag" > /dev/null 2>&1 \
+            || gh release create "$tag" --title "Data $tag" --notes "Published by the data workflow, downloaded by pipeline workers" --latest=false
+          # The archive goes first, so a worker never sees an index without its data
+          gh release upload "$tag" release/data.zip --clobber
+          gh release upload "$tag" release/index.json --clobber

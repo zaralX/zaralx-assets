@@ -12,6 +12,9 @@ block and item models, GUI transforms and lighting, tints, and the entity models
 beds, shulker boxes, heads, shields, pots and conduits. The result is compared with 1396 in-game
 screenshots of 1.21.5 in `test/golden`.
 
+The `Data` workflow runs this hourly on GitHub: it builds new releases, checks them against the
+screenshots and publishes `data.zip` to the `data-v<PIPELINE_VERSION>` release. Servers only download it.
+
 Files are stored once by their sha1 in `DATA_DIR/blobs/<ab>/<sha1>.<ext>`, most icons and textures
 are the same across versions. `DATA_DIR/versions/<id>` only holds manifests:
 
@@ -62,7 +65,9 @@ pnpm dev
 | `pnpm dev`                                    | API with reload                                           |
 | `pnpm pipeline list`                          | versions and their state                                  |
 | `pnpm pipeline sync`                          | build missing or outdated versions                        |
-| `pnpm pipeline watch`                         | `sync` every `PIPELINE_INTERVAL_MINUTES`                  |
+| `pnpm pipeline watch`                         | `pull` or `sync` every `PIPELINE_INTERVAL_MINUTES`, see `PIPELINE_SOURCE` |
+| `pnpm pipeline pull`                          | import versions from the GitHub release                   |
+| `pnpm pipeline pack <dir>`                    | write `data.zip` and `index.json` for the release          |
 | `pnpm pipeline build <id...>`                 | build given versions                                      |
 | `pnpm pipeline gc`                            | delete blobs no version refers to, also runs after `sync` |
 | `pnpm pipeline render <id> <item> --size 512` | render one icon to png                                    |
@@ -77,15 +82,15 @@ format changes, also raise `DATA_FORMAT` in `src/catalog/types.ts`: the API skip
 ## Deploy
 
 `docker compose up -d` starts the API, the pipeline worker and Redis. API and worker share the
-`assets_data` volume. On first start the worker builds all releases since `PIPELINE_MIN_VERSION`,
-about a minute each.
+`assets_data` volume. The worker downloads versions from the GitHub release (about 20 MB) and checks
+for new ones every hour. With `PIPELINE_SOURCE=build` it renders them itself instead, about a minute each.
 
 ### Coolify, Dokploy and similar
 
 1. Create a Docker Compose resource from this repository (or paste `docker-compose.yml`).
 2. Attach your domain to the `api` service, port `3000`. Remove `ports` if the host port is taken.
 3. Set `PUBLIC_URL` to the public address of the API, e.g. `https://assets.example.com`.
-4. Deploy. The API answers 404 until the worker has built the first version, a minute or two.
+4. Deploy. The API answers 404 until the worker has downloaded the data, usually under a minute.
 
 The image is `ghcr.io/zaralx/zaralx-assets:latest`, built on every push to `master`.
 
