@@ -5,6 +5,7 @@ import { useLegacyVersion } from '../../../../../utils/http'
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get('/categories', {
     schema: {
+      summary: 'Categories',
       tags: ['v1'],
       deprecated: true,
       description: 'Use /v2/minecraft/{version}/creative-tabs',

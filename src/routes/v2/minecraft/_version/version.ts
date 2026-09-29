@@ -5,6 +5,7 @@ import { publicUrl, setCaching, useVersion } from '../../../../utils/http'
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { version: string } }>('/', {
     schema: {
+      summary: 'Version',
       tags: ['versions'],
       description: 'Build information of a version, including items without an icon',
       params: { type: 'object', required: ['version'], properties: { version: versionParam } },

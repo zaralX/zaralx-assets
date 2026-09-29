@@ -13,6 +13,7 @@ const CONTENT_TYPES: Record<string, string> = {
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { file: string }, Querystring: { size?: number, format?: ImageFormat } }>('/blobs/:file', {
     schema: {
+      summary: 'File by hash',
       tags: ['versions'],
       description: 'A file by its sha1, as referenced by `iconBlobs` and `blob` fields. Never changes, cached for a year',
       params: {

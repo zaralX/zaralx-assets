@@ -5,6 +5,7 @@ import { useLegacyVersion } from '../../../../../utils/http'
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { id: string } }>('/:id', {
     schema: {
+      summary: 'Language',
       tags: ['v1'],
       deprecated: true,
       description: 'Use /v2/minecraft/{version}/lang/{code}',

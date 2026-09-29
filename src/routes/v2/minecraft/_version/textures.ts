@@ -14,6 +14,7 @@ interface TextureQuery {
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { version: string }, Querystring: { prefix?: string } }>('/textures', {
     schema: {
+      summary: 'List textures',
       tags: ['textures'],
       description: 'Every vanilla texture (assets/minecraft/textures) of a version',
       params: { type: 'object', required: ['version'], properties: { version: versionParam } },
@@ -56,6 +57,7 @@ const route: FastifyPluginAsync = async (fastify) => {
 
   fastify.get<{ Params: { 'version': string, '*': string }, Querystring: TextureQuery }>('/textures/*', {
     schema: {
+      summary: 'Texture',
       tags: ['textures'],
       description: 'A texture as it is in the game files. Animated textures return their first frame unless `frame` or `strip` is given. '
         + 'The extension picks the format (.png or .webp), `format` overrides it.\n\n'
