@@ -12,7 +12,7 @@ import { ItemRenderer } from './render'
 import type { RenderPart } from './render/item-model'
 import type { Logger } from './logger'
 
-// Bump when the output of a build changes, so `sync` rebuilds existing versions
+// Bump to make sync rebuild existing versions
 export const PIPELINE_VERSION = 3
 
 const ITEMS = 'assets/minecraft/items/'
@@ -154,7 +154,6 @@ export async function buildVersion(version: ManifestVersion, { dataDir, manifest
   }
   await writeJson(join(outDir, VERSION_FILES.meta), meta)
 
-  // Swap with two renames so the API never sees a half-written version
   const oldDir = `${finalDir}.old`
   await rm(oldDir, { recursive: true, force: true })
   await rename(finalDir, oldDir).catch(() => undefined)

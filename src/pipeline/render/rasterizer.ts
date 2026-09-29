@@ -13,7 +13,6 @@ const LIGHT_0 = normalize([0.2, 1, -0.7])
 const LIGHT_1 = normalize([-0.2, 1, 0.7])
 const LIGHT_POWER = 0.6
 const AMBIENT = 0.4
-// Below this alpha the item shaders discard the fragment
 const ALPHA_CUTOFF = 0.1
 
 // Lighting.ITEMS_FLAT and Lighting.ITEMS_3D
@@ -77,7 +76,7 @@ export function renderScene(layers: SceneLayer[], size: number) {
   }
 
   for (const triangle of solid) rasterize(triangle, size, color, depth)
-  // Translucent geometry is drawn back to front, like the game's quad sorting
+  // Translucent quads go back to front
   translucent.sort((a, b) => a.z - b.z)
   for (const { triangle } of translucent) rasterize(triangle, size, color, depth)
 
@@ -91,7 +90,7 @@ function rasterize({ points, uvs: [ua, ub, uc], quad, light, cull }: Triangle, s
   let [b, c] = [points[1], points[2]]
   let uvs = [ua, ub, uc]
   let area = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
-  // In screen space (Y down) front faces wind clockwise
+  // Front faces are clockwise on screen
   if (area < 0) {
     if (cull) return
     ;[b, c] = [c, b]

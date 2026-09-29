@@ -33,7 +33,6 @@ export function textureFile(dir: string, path: string) {
   return join(dir, 'textures', `${path}.png`)
 }
 
-// Game ids and texture paths are lowercase [a-z0-9_./-]; anything else never reaches the file system
 export const ID_PATTERN = /^[a-z0-9_][a-z0-9_.-]*$/
 export const TEXTURE_PATH_PATTERN = /^[a-z0-9_][a-z0-9_.-]*(\/[a-z0-9_][a-z0-9_.-]*)*$/
 export const LANG_PATTERN = /^[a-z]{2,4}(_[a-z]{2,4})?$/

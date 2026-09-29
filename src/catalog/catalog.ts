@@ -19,7 +19,6 @@ export interface VersionData {
 
 const INDEX_CHECK_INTERVAL = 30_000
 
-// Read side of the pipeline output; picks up newly built versions without a restart
 export class Catalog {
   private index: VersionIndex = { updatedAt: '', versions: [] }
   private indexMtime = 0
@@ -65,7 +64,7 @@ export class Catalog {
     return textureFile(this.dir(version), path)
   }
 
-  // Languages other than en_us are fetched from Mojang on first use and kept next to the build
+  // Languages other than en_us are downloaded on first use
   lang(version: VersionData, code: string) {
     const key = `${version.meta.id}/${code}`
     let pending = this.langs.get(key)

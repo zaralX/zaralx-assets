@@ -13,10 +13,8 @@ export const CONTENT_TYPES: Record<ImageFormat, string> = {
 
 export interface ImageRequest {
   file: string
-  // Target width; height follows the aspect ratio of the (cropped) source
   width?: number
   format: ImageFormat
-  // Crop one frame out of a vertical animation strip
   frame?: { index: number, width: number, height: number }
 }
 

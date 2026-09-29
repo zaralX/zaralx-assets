@@ -21,7 +21,6 @@ export interface VersionIndex {
 export interface VersionMeta extends VersionSummary {
   assetIndex: { id: string, url: string, sha1: string }
   client: { url: string, sha1: string }
-  // Items whose icon could not be rendered, with the reason
   missingIcons: Record<string, string>
 }
 
@@ -39,9 +38,7 @@ export interface BlockEntry {
   item: boolean
   model?: string
   particle?: string
-  // Texture shown on each side of the block in its default state
   faces: Partial<Record<Direction, string>>
-  // Every texture used by any state of the block
   textures: string[]
 }
 
@@ -58,5 +55,4 @@ export type CreativeTabs = Record<string, string[]>
 
 export const UNCATEGORIZED = 'uncategorized'
 
-// Icons are rendered natively at every GUI scale from 1 to 16, other sizes are scaled from the next larger one
 export const ICON_SIZES = [16, 32, 64, 128, 256] as const

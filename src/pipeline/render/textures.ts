@@ -5,10 +5,8 @@ export interface Texture {
   id: string
   width: number
   height: number
-  // RGBA of the first animation frame
   data: Buffer
   frames: number
-  // Has pixels that are neither fully opaque nor fully transparent
   translucent: boolean
 }
 

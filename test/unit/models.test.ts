@@ -28,7 +28,6 @@ test('texture references resolve through variables', () => {
   const model = models.get('block/child')
   assert.deepEqual(models.texture(model, '#particle'), { sprite: 'minecraft:block/stone', translucent: false })
   assert.deepEqual(models.texture(model, '#top'), { sprite: 'minecraft:block/glass', translucent: true })
-  // faces may name a variable without the hash
   assert.deepEqual(models.texture(model, 'all'), { sprite: 'minecraft:block/dirt', translucent: false })
   assert.equal(models.texture(model, '#missing'), undefined)
 })

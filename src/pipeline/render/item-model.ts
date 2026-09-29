@@ -2,14 +2,12 @@ import type { Transformation } from './special/pose'
 import type { TextureStore } from './textures'
 import type { ItemModelNode, Rgb, SpecialModel } from './types'
 
-// Transformations are listed outermost first
 export type RenderPart
   = | { kind: 'model', model: string, tints: Rgb[], transformations: Transformation[] }
     | { kind: 'special', base: string, model: SpecialModel, transformations: Transformation[] }
 
 const WHITE: Rgb = [255, 255, 255]
 
-// Item properties evaluated for a plain stack sitting in an inventory slot
 const GUI_CONTEXT = 'gui'
 const RANGE_VALUE = 0
 

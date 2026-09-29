@@ -32,7 +32,6 @@ function transpose(m: Mat3): Mat3 {
   return [m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]]
 }
 
-// Affine transform in block units, like the game's PoseStack
 export class Pose {
   constructor(public linear: Mat3 = IDENTITY, public offset: Vec3 = [0, 0, 0]) {}
 
@@ -67,7 +66,7 @@ export class Pose {
     return this.multiply(rotZ(radians))
   }
 
-  // Transformation.getMatrix(): translation * left rotation * scale * right rotation
+  // translation * left rotation * scale * right rotation
   transform(t: Transformation) {
     const [tx, ty, tz] = t.translation ?? [0, 0, 0]
     const [sx, sy, sz] = t.scale ?? [1, 1, 1]

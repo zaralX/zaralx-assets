@@ -60,7 +60,6 @@ const BANNER_POLE: ModelPart = {
   ],
 }
 
-// BannerFlagModel with the standing pose, swaying phase 0
 const BANNER_FLAG: ModelPart = {
   offset: [0, -44, 0],
   rotation: [(-0.0125 + 0.01) * PI, 0, 0],
@@ -83,7 +82,6 @@ const HUMANOID_HEAD: ModelPart = {
   ],
 }
 
-// Mouth animation 0: the jaw rests at 0.2 rad, piglin ears at -+0.7 rad
 const DRAGON_HEAD: ModelPart = {
   // PartPose.scaled() scales the offset as well
   offset: [0, -7.986666 * 0.75, 0],
@@ -168,7 +166,7 @@ const POT_SIDES: ModelPart = {
 
 const CONDUIT_SHELL: ModelPart = { cubes: [{ uv: [0, 0], origin: [-3, -3, -3], size: [6, 6, 6] }] }
 
-// Before 26.x these placements lived in the renderers; newer item definitions carry them as `transformation`
+// Since 26.x item definitions carry these as `transformation`
 const LEGACY_TRANSFORMS: Record<string, Transformation> = {
   banner: { translation: [0.5, 0, 0.5], scale: [2 / 3, -2 / 3, -2 / 3] },
   head: { translation: [0.5, 0, 0.5], left_rotation: [1, 0, 0, 0] },

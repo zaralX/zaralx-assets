@@ -4,8 +4,6 @@ import type { Texture } from '../textures'
 import type { Direction, Rgb } from '../types'
 import type { Pose } from './pose'
 
-// Mirrors the game's ModelPart / CubeListBuilder: positions in pixels, Y down unless the renderer flips it
-
 export interface Cube {
   uv: Vec2
   origin: Vec3
@@ -18,7 +16,7 @@ export interface Cube {
 export interface ModelPart {
   cubes?: Cube[]
   offset?: Vec3
-  // Radians, applied Z * Y * X like PartPose
+  // Radians, Z * Y * X
   rotation?: Vec3
   scale?: number
   children?: ModelPart[]
@@ -26,7 +24,6 @@ export interface ModelPart {
 
 export interface EntityTexture {
   texture: Texture
-  // Size of the UV space the model was authored for
   width: number
   height: number
   tint?: Rgb

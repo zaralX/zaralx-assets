@@ -25,7 +25,7 @@ function all(list: VariantList) {
   return Array.isArray(list) ? list : [list]
 }
 
-// The game's default state lives in code; an unrotated variant is the closest thing the assets offer
+// The default state is defined in code, so take an unrotated variant
 function defaultModel(state: BlockState) {
   if (state.variants) {
     const variants = Object.values(state.variants).map(first)
@@ -85,7 +85,7 @@ export function extractBlocks(assets: JarAssets, models: ModelResolver, items: S
         for (const sprite of modelTextures(models, m)) textures.add(sprite)
       }
       catch {
-        // a state pointing at a missing model is skipped, like the game does
+        // missing model
       }
     }
 
@@ -97,7 +97,7 @@ export function extractBlocks(assets: JarAssets, models: ModelResolver, items: S
         particle = models.texture(models.get(model), '#particle')?.sprite
       }
       catch {
-        // same as above
+        // missing model
       }
     }
 

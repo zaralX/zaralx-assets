@@ -4,10 +4,8 @@ import type { Texture, TextureStore } from './textures'
 import type { Direction, ElementRotation, ModelElement, Rgb } from './types'
 
 export interface Quad {
-  // Model space, 0..16
   positions: [Vec3, Vec3, Vec3, Vec3]
   uvs: [Vec2, Vec2, Vec2, Vec2]
-  // Normal used for lighting
   normal: Vec3
   texture: Texture
   tint: Rgb
@@ -17,7 +15,7 @@ export interface Quad {
 type Corners = (a: Vec3, b: Vec3) => [Vec3, Vec3, Vec3, Vec3]
 type DefaultUv = (a: Vec3, b: Vec3) => [number, number, number, number]
 
-// Corner order is top-left, top-right, bottom-right, bottom-left as seen from outside
+// Corners: top-left, top-right, bottom-right, bottom-left
 const FACES: Record<Direction, { normal: Vec3, corners: Corners, uv: DefaultUv }> = {
   up: {
     normal: [0, 1, 0],
@@ -128,7 +126,7 @@ export async function elementQuads(
   return quads
 }
 
-// builtin/generated: in a GUI slot only the front sprite of the extruded model is visible
+// Only the front sprite of an extruded item model is visible in a slot
 export async function generatedQuads(models: ModelResolver, textures: TextureStore, model: ResolvedModel, tints: Rgb[]) {
   const quads: Quad[] = []
   for (let layer = 0; ; layer++) {

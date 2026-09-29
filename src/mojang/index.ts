@@ -66,7 +66,6 @@ export function fetchManifest() {
   return fetchJson<VersionManifest>(VERSION_MANIFEST_URL)
 }
 
-// Downloads into `file` once; an existing file with the right hash is reused
 export async function downloadVerified(download: Pick<Download, 'url' | 'sha1'>, file: string) {
   try {
     const existing = await readFile(file)

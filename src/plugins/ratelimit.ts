@@ -7,7 +7,7 @@ export default fp(async (fastify) => {
     max: 250,
     timeWindow: '1 minute',
     keyGenerator: (request) => {
-      // X-Real-IP is only meaningful behind our own proxy; otherwise any client could pick its own key
+      // X-Real-IP can be spoofed unless we are behind our proxy
       const realIp = config.trustProxy ? request.headers['x-real-ip'] : undefined
       return typeof realIp === 'string' ? realIp : request.ip
     },

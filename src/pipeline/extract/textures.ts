@@ -10,7 +10,6 @@ interface AnimationMeta {
   animation?: { width?: number, height?: number }
 }
 
-// Copies every vanilla texture as-is, next to its .mcmeta
 export async function extractTextures(assets: JarAssets, outDir: string) {
   const entries: TextureEntry[] = []
   for (const file of assets.list(TEXTURES, '.png')) {

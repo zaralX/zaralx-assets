@@ -22,7 +22,6 @@ function transformQuads(quads: Quad[], transformations: Parameters<Pose['transfo
 }
 
 export interface ItemRenderResult {
-  // RGBA, ICON_SIZE x ICON_SIZE; undefined when the item has nothing to draw
   image?: Buffer
   parts: RenderPart[]
   unsupported: SpecialModel[]

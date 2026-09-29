@@ -58,7 +58,7 @@ async function skinFromSessionServer(uuid: string) {
   return download(url.replace(/^http:/, 'https:'))
 }
 
-// mineskin.eu mirrors skins without Mojang's rate limit; the session server is the fallback
+// mineskin.eu has no Mojang rate limit
 export async function getSkin(cache: KeyValueCache, uuid: string) {
   const key = `player:skin:${uuid}`
   const cached = await cache.get(key)
@@ -96,7 +96,7 @@ export async function renderFace(skin: Buffer, size: number, overlay: boolean) {
   return sharp(face).composite([{ input: await region(skin, 40, 8, size) }]).png().toBuffer()
 }
 
-// v1 "full" face: the back of the hat behind a slightly shrunk face, then the hat front on top
+// v1 "full" face
 export async function renderLayeredFace(skin: Buffer, size: number) {
   const inset = Math.round(size / 32)
   const [back, face, front] = await Promise.all([

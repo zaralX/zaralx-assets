@@ -13,8 +13,7 @@ const GOLDEN_DIR = join(__dirname, VERSION)
 const CACHE_DIR = process.env.GOLDEN_CACHE_DIR ?? join(__dirname, '..', '..', 'data', 'cache', 'jars')
 
 const MAX_MEAN_DIFF = 3
-// GPU rasterization snaps vertices to a subpixel grid, so pixels lying on a shared edge may land on the other face.
-// Such mismatches form 1-2px lines, while a wrong texel covers ~10px at this size, so the mask is eroded by 2px.
+// On a GPU edge pixels may land on the neighbouring face; erosion drops those 1-2px lines
 const EDGE_EROSION = 2
 
 async function rgba(input: Buffer | string, raw?: boolean) {
@@ -24,7 +23,7 @@ async function rgba(input: Buffer | string, raw?: boolean) {
   return image.ensureAlpha().resize(ICON_SIZE, ICON_SIZE, { kernel: 'nearest' }).raw().toBuffer()
 }
 
-// The screenshots were read back from the framebuffer, where blending leaves colors premultiplied by alpha
+// Screenshots store colors premultiplied by alpha
 function premultiply(image: Buffer) {
   for (let i = 0; i < image.length; i += 4) {
     const a = image[i + 3] / 255
@@ -80,7 +79,6 @@ test(`item icons match in-game screenshots of ${VERSION}`, { timeout: 15 * 60_00
   if (!existsSync(jarFile)) console.log(`downloading ${VERSION} client.jar`)
   await downloadVerified(version.downloads.client, jarFile)
 
-  // Items that are expected to differ, with the reason
   const known: Record<string, string> = JSON.parse(await readFile(join(__dirname, `${VERSION}.known.json`), 'utf8'))
   const renderer = new ItemRenderer(await JarAssets.open(jarFile))
   const golden = (await readdir(GOLDEN_DIR)).filter(f => f.endsWith('.webp')).map(f => f.slice(0, -5))

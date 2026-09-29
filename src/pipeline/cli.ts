@@ -39,7 +39,6 @@ async function pending(force: boolean) {
 
 async function build(targets: ManifestVersion[], manifest: ManifestVersion[]) {
   let failed = 0
-  // Oldest first, so `latest` only moves forward while a sync is running
   for (const version of [...targets].reverse()) {
     try {
       await buildVersion(version, { dataDir: config.dataDir, manifest, keepJar: config.pipeline.keepJars, log })

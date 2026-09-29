@@ -14,7 +14,6 @@ export async function useVersion(fastify: FastifyInstance, version: string) {
   return { summary, data, alias }
 }
 
-// Builds of a version only change when the pipeline is upgraded; aliases move with every release
 export function setCaching(reply: FastifyReply, alias: boolean, builtAt: string, key: string) {
   reply.header('Cache-Control', alias
     ? 'public, max-age=3600'
@@ -53,7 +52,6 @@ export async function useLang(fastify: FastifyInstance, data: VersionData, code:
   }
 }
 
-// v1 predates versioning and keeps serving the version it was built for, or the latest release until that is built
 export async function useLegacyVersion(fastify: FastifyInstance) {
   const version = await fastify.catalog.resolve(config.legacyVersion) ? config.legacyVersion : LATEST
   return useVersion(fastify, version)

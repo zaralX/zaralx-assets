@@ -9,7 +9,7 @@ function int(value: string | undefined, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-// 'true', a hop count, or addresses/subnets as understood by proxy-addr; unset means the socket address is used
+// true, a hop count or addresses for proxy-addr
 function trustProxy(value: string | undefined) {
   if (!value || value === 'false') return false
   if (value === 'true') return true
@@ -32,13 +32,12 @@ export const config = {
   dataDir: resolve(env.DATA_DIR ?? 'data'),
 
   pipeline: {
-    // Oldest version to build; versions before 1.21.4 have no item model definitions
+    // items/*.json appeared in 1.21.4
     minVersion: env.PIPELINE_MIN_VERSION ?? '1.21.4',
     types: list(env.PIPELINE_TYPES, ['release']),
     intervalMinutes: int(env.PIPELINE_INTERVAL_MINUTES, 60),
     keepJars: env.PIPELINE_KEEP_JARS === 'true',
   },
 
-  // Version served by the v1 routes, which predate versioning
   legacyVersion: env.LEGACY_VERSION ?? '1.21.5',
 }

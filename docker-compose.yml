@@ -16,7 +16,7 @@ services:
     depends_on:
       - redis
 
-  # Builds every supported version on first start (about a minute each), then checks for new ones
+  # Builds all versions on first start, about a minute each
   worker:
     image: ghcr.io/zaralx/zaralx-assets:latest
     restart: unless-stopped

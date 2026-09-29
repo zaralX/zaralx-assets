@@ -5,8 +5,7 @@ import type { ManifestVersion } from '../../mojang'
 
 const TABS_DIR = join(__dirname, '..', '..', '..', 'resources', 'creative-tabs')
 
-// Creative tabs are defined in game code, so they come from hand-maintained snapshots:
-// the newest snapshot that is not newer than the version is used and filtered to its items
+// Tabs are defined in code, so the newest hand-made snapshot not newer than the version is used
 export async function creativeTabs(version: ManifestVersion, manifest: ManifestVersion[], items: string[]): Promise<CreativeTabs> {
   const releaseTime = new Map(manifest.map(v => [v.id, v.releaseTime]))
   const snapshots = (await readdir(TABS_DIR))

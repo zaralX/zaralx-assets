@@ -11,7 +11,7 @@ export default fp(async (fastify) => {
     openapi: {
       info: {
         title: 'zaralX Assets',
-        description: 'Minecraft assets API: item icons rendered like in game, block textures, languages and player skins for every supported version.',
+        description: 'Minecraft item icons, block textures, languages and player skins',
         version,
       },
       servers: [{ url: config.publicUrl }],

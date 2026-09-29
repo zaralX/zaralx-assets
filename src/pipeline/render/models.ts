@@ -48,7 +48,7 @@ export class ModelResolver {
   }
 
   texture(model: ResolvedModel, ref: string): ResolvedTexture | undefined {
-    // A face may name its texture variable without the leading '#', texture map values may not
+    // Faces may omit the '#'
     let current: TextureRef | undefined = ref.startsWith('#') ? ref : (model.textures[ref] ?? ref)
     for (let i = 0; i < MAX_DEPTH && current !== undefined; i++) {
       if (typeof current !== 'string') {
