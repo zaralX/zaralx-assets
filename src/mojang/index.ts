@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
-import { dirname } from 'node:path'
+import { readFile } from 'node:fs/promises'
+import { downloadFile, type DownloadOptions } from '../utils/download'
 
 export const VERSION_MANIFEST_URL = 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json'
 export const RESOURCES_URL = 'https://resources.download.minecraft.net'
@@ -66,21 +66,7 @@ export function fetchManifest() {
   return fetchJson<VersionManifest>(VERSION_MANIFEST_URL)
 }
 
-export async function downloadVerified(download: Pick<Download, 'url' | 'sha1'>, file: string) {
-  try {
-    const existing = await readFile(file)
-    if (sha1(existing) === download.sha1) return existing
-  }
-  catch {
-    // not downloaded yet
-  }
-
-  const data = await fetchBuffer(download.url, 10 * 60_000)
-  const actual = sha1(data)
-  if (actual !== download.sha1) throw new Error(`sha1 mismatch for ${download.url}: ${actual} != ${download.sha1}`)
-
-  await mkdir(dirname(file), { recursive: true })
-  await writeFile(file + '.tmp', data)
-  await rename(file + '.tmp', file)
-  return data
+export async function downloadVerified(download: Pick<Download, 'url' | 'sha1'>, file: string, options: Omit<DownloadOptions, 'sha1'> = {}) {
+  await downloadFile(download.url, file, { ...options, sha1: download.sha1 })
+  return readFile(file)
 }

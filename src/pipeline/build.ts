@@ -1,10 +1,11 @@
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import sharp from 'sharp'
-import { BlobWriter, collectGarbage } from '../catalog/blobs'
+import { blobFile, BlobWriter, collectGarbage } from '../catalog/blobs'
 import { jarCacheDir, VERSION_FILES, versionDir, versionsIndexFile } from '../catalog/paths'
 import { DATA_FORMAT, ICON_SIZES, type ItemEntry, type LangIndex, type TextureEntry, type VersionIndex, type VersionMeta, type VersionSummary } from '../catalog/types'
-import { downloadVerified, fetchJson, type AssetIndex, type ManifestVersion, type VersionJson } from '../mojang'
+import { assetObjectUrl, downloadVerified, fetchJson, type AssetIndex, type ManifestVersion, type VersionJson } from '../mojang'
+import { downloadFile } from '../utils/download'
 import { extractBlocks } from './extract/blocks'
 import { creativeTabs } from './extract/creative-tabs'
 import { extractTextures } from './extract/textures'
@@ -52,24 +53,25 @@ export interface BuildOptions {
   dataDir: string
   manifest: ManifestVersion[]
   keepJar: boolean
+  // Languages stored with the build instead of being downloaded on first request
+  prefetchLangs: string[]
   log: Logger
 }
 
-export async function buildVersion(version: ManifestVersion, { dataDir, manifest, keepJar, log }: BuildOptions) {
+export async function buildVersion(version: ManifestVersion, { dataDir, manifest, keepJar, prefetchLangs, log }: BuildOptions) {
   const started = Date.now()
   const json = await fetchJson<VersionJson>(version.url)
 
   const jarFile = join(jarCacheDir(dataDir), `${json.downloads.client.sha1}.jar`)
   log.info(`${version.id}: downloading client.jar`)
-  await downloadVerified(json.downloads.client, jarFile)
+  await downloadVerified(json.downloads.client, jarFile, { log: message => log.warn(`${version.id}: ${message}`) })
   const assets = await JarAssets.open(jarFile)
   if (assets.list(ITEMS, '.json').length === 0) {
     throw new UnsupportedVersionError(`${version.id} has no item model definitions (added in 1.21.4)`)
   }
 
   const blobs = new BlobWriter(dataDir)
-  const finalDir = versionDir(dataDir, version.id)
-  const outDir = `${finalDir}.building`
+  const outDir = `${versionDir(dataDir, version.id)}.building`
   await rm(outDir, { recursive: true, force: true })
   await mkdir(outDir, { recursive: true })
 
@@ -84,6 +86,10 @@ export async function buildVersion(version: ManifestVersion, { dataDir, manifest
   }
   const enUs = assets.read(EN_US) ?? Buffer.from('{}')
   langIndex.en_us = { hash: await blobs.put(enUs, 'json'), size: enUs.length }
+  for (const code of prefetchLangs) {
+    const object = langIndex[code]
+    if (object) await downloadFile(assetObjectUrl(object.hash), blobFile(dataDir, object.hash, 'json'), { sha1: object.hash })
+  }
   const lang = JSON.parse(enUs.toString('utf8')) as Record<string, string>
 
   log.info(`${version.id}: rendering item icons`)
@@ -161,12 +167,8 @@ export async function buildVersion(version: ManifestVersion, { dataDir, manifest
   await writeJson(join(outDir, VERSION_FILES.creativeTabs), await creativeTabs(version, manifest, items.map(i => i.id)))
   await writeJson(join(outDir, VERSION_FILES.meta), meta)
 
-  const oldDir = `${finalDir}.old`
-  await rm(oldDir, { recursive: true, force: true })
-  await rename(finalDir, oldDir).catch(() => undefined)
-  await rename(outDir, finalDir)
-  await rm(oldDir, { recursive: true, force: true })
-  await updateIndex(dataDir, summary)
+  await installVersion(dataDir, version.id, outDir)
+  await recordVersions(dataDir, [summary])
   if (!keepJar) await rm(jarFile, { force: true })
 
   const rendered = items.filter(i => i.icons[256]).length
@@ -184,9 +186,20 @@ export async function readIndex(dataDir: string): Promise<VersionIndex> {
   }
 }
 
-async function updateIndex(dataDir: string, summary: VersionSummary) {
+// Two renames, so the API never sees a half-written version
+export async function installVersion(dataDir: string, id: string, builtDir: string) {
+  const finalDir = versionDir(dataDir, id)
+  const oldDir = `${finalDir}.old`
+  await rm(oldDir, { recursive: true, force: true })
+  await rename(finalDir, oldDir).catch(() => undefined)
+  await rename(builtDir, finalDir)
+  await rm(oldDir, { recursive: true, force: true })
+}
+
+export async function recordVersions(dataDir: string, summaries: VersionSummary[]) {
   const index = await readIndex(dataDir)
-  index.versions = [summary, ...index.versions.filter(v => v.id !== summary.id)]
+  const ids = new Set(summaries.map(v => v.id))
+  index.versions = [...summaries, ...index.versions.filter(v => !ids.has(v.id))]
     .sort((a, b) => b.releaseTime.localeCompare(a.releaseTime))
   index.updatedAt = new Date().toISOString()
   const file = versionsIndexFile(dataDir)
@@ -194,7 +207,7 @@ async function updateIndex(dataDir: string, summary: VersionSummary) {
   await rename(`${file}.tmp`, file)
 }
 
-export async function removeUnusedBlobs(dataDir: string) {
+export async function referencedBlobs(dataDir: string) {
   const referenced = new Set<string>()
   // Throws if a manifest is unreadable, so nothing is deleted then
   for (const { id, pipeline } of (await readIndex(dataDir)).versions) {
@@ -209,5 +222,9 @@ export async function removeUnusedBlobs(dataDir: string) {
     }
     for (const { hash } of Object.values(await readJson<LangIndex>(join(dir, VERSION_FILES.langIndex)))) referenced.add(hash)
   }
-  return collectGarbage(dataDir, referenced)
+  return referenced
+}
+
+export async function removeUnusedBlobs(dataDir: string) {
+  return collectGarbage(dataDir, await referencedBlobs(dataDir))
 }

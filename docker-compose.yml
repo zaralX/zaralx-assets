@@ -21,13 +21,17 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      # Proxies skip starting containers, so check often until the first success
+      start_period: 30s
+      start_interval: 2s
 
-  # Builds all versions on first start, about a minute each
+  # Downloads built versions from the GitHub release; PIPELINE_SOURCE=build renders them here instead
   worker:
     image: ghcr.io/zaralx/zaralx-assets:latest
     restart: unless-stopped
     command: ["node", "dist/pipeline/cli.js", "watch"]
     environment:
+      PIPELINE_SOURCE: ${PIPELINE_SOURCE:-github}
       PIPELINE_MIN_VERSION: ${PIPELINE_MIN_VERSION:-1.21.4}
       PIPELINE_TYPES: ${PIPELINE_TYPES:-release}
       PIPELINE_INTERVAL_MINUTES: ${PIPELINE_INTERVAL_MINUTES:-60}
