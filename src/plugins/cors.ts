@@ -1,5 +1,5 @@
 import fp from 'fastify-plugin'
-import fastifyCors, {FastifyCorsOptions} from '@fastify/cors'
+import fastifyCors, { FastifyCorsOptions } from '@fastify/cors'
 
 /**
  * This plugin adds cors rules
@@ -7,9 +7,9 @@ import fastifyCors, {FastifyCorsOptions} from '@fastify/cors'
  * @see https://github.com/fastify/fastify-cors
  */
 export default fp<FastifyCorsOptions>(async (fastify) => {
-    fastify.register(fastifyCors, {
-        origin: true,
-        credentials: true,
-        methods: ["GET"]
-    })
+  fastify.register(fastifyCors, {
+    origin: true,
+    credentials: true,
+    methods: ['GET'],
+  })
 })

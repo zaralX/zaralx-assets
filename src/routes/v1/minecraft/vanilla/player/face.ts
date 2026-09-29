@@ -1,261 +1,263 @@
-import {FastifyPluginAsync} from "fastify";
-import {isValidUUID} from "../../../../../utils/uuidUtil";
-import axios from 'axios';
-import sharp from 'sharp';
-import path from "path";
-import {isValidMinecraftNickname, nicknameToUUID} from "../../../../../utils/nicknameUtil";
+import { FastifyPluginAsync } from 'fastify'
+import { isValidUUID } from '../../../../../utils/uuidUtil'
+import axios from 'axios'
+import sharp from 'sharp'
+import path from 'path'
+import { isValidMinecraftNickname, nicknameToUUID } from '../../../../../utils/nicknameUtil'
 
 const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-    const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-    const FULL_FACE_RESIZE = 8;
+  const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
+  const FULL_FACE_RESIZE = 8
 
-    fastify.get('/face/:identifier', {
-        schema: {
-            description: 'Get player face image by UUID or nickname',
-            params: {
-                type: 'object',
-                required: ['identifier'],
-                properties: {
-                    identifier: {
-                        type: 'string',
-                        description: 'Player UUID or Minecraft nickname',
-                        examples: ['069a79f4-44e9-4726-a5fa-f2b5e5e5e5e5', 'Notch']
-                    }
-                }
+  fastify.get('/face/:identifier', {
+    schema: {
+      description: 'Get player face image by UUID or nickname',
+      params: {
+        type: 'object',
+        required: ['identifier'],
+        properties: {
+          identifier: {
+            type: 'string',
+            description: 'Player UUID or Minecraft nickname',
+            examples: ['069a79f4-44e9-4726-a5fa-f2b5e5e5e5e5', 'Notch'],
+          },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          description: '![Example](https://assets.zaralx.ru/api/v1/minecraft/vanilla/player/face/_zaralX_)',
+          content: {
+            'image/png': {
+              schema: {
+                type: 'string',
+                format: 'binary',
+              },
             },
-            response: {
-                200: {
-                    type: 'object',
-                    description: '![Example](https://assets.zaralx.ru/api/v1/minecraft/vanilla/player/face/_zaralX_)',
-                    content: {
-                        'image/png': {
-                            schema: {
-                                type: 'string',
-                                format: 'binary'
-                            }
-                        }
-                    }
-                },
-                400: {
-                    type: 'object',
-                    description: 'Bad request - invalid UUID or nickname',
-                    properties: {
-                        message: {
-                            type: 'string',
-                            example: 'Invalid UUID or Nickname'
-                        }
-                    }
-                },
-                500: {
-                    type: 'object',
-                    description: 'Internal server error',
-                    properties: {
-                        message: {
-                            type: 'string',
-                            example: 'Failed to fetch skin'
-                        },
-                        error: {
-                            type: 'string',
-                            description: 'Error message'
-                        }
-                    }
-                }
-            }
-        }
-    }, async function (request, reply) {
-        const identifier: string = (request.params as any).identifier;
-
-        const isUuid = isValidUUID(identifier)
-        const isNickname = isValidMinecraftNickname(identifier)
-
-        if (!isUuid && !isNickname) {
-            return reply.status(400).send({message: 'Invalid UUID or Nickname'});
-        }
-
-        const uuid = isUuid ? identifier : await nicknameToUUID(fastify, identifier)
-
-        // Check cache first
-        const cachedSkinFace = (fastify as any).cache.skinFace.get(uuid);
-        if (cachedSkinFace && Date.now() - cachedSkinFace.timestamp < CACHE_TTL) {
-            fastify.log.debug(`GET FACE ${identifier} FROM REDIS CACHE ${Date.now() - cachedSkinFace.timestamp} < ${CACHE_TTL}`)
-            reply.header('Content-Type', 'image/png');
-            reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`);
-            return reply.send(cachedSkinFace.data);
-        }
-
-        try {
-            let skin = (fastify as any).cache.skin.get(uuid);
-            if (!skin || Date.now() - skin.timestamp < CACHE_TTL) {
-                const skin_url = (fastify as any).skin_url.replace("%A", uuid);
-                const response = await axios.get(skin_url, {
-                    responseType: 'arraybuffer'
-                });
-                skin = {
-                    data: response.data,
-                    timestamp: Date.now()
-                };
-                (fastify as any).cache.skin.set(uuid, skin);
-            }
-
-            const sharpSkin = sharp(skin.data);
-            const skinFace = await sharpSkin.extract({left: 8, top: 8, width: 8, height: 8})
-                .resize(256, 256, {kernel: sharp.kernel.nearest})
-                .toBuffer();
-
-            // Cache the skinFace data
-            (fastify as any).cache.skinFace.set(uuid, {
-                data: skinFace,
-                timestamp: Date.now()
-            });
-
-            fastify.log.debug(`GET FACE ${identifier} CLAIMED TO CACHE`)
-
-            // Set response headers
-            reply.header('Content-Type', 'image/png');
-            reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`);
-
-            return reply.send(skinFace);
-        } catch (error) {
-            fastify.log.error(error);
-            return reply.status(500).send({
-                message: 'Failed to fetch skin',
-                error: (error as any).message
-            });
-        }
-    });
-
-    fastify.get('/face/:identifier/full', {
-        schema: {
-            description: 'Get full player face image (with layers) by UUID or nickname',
-            params: {
-                type: 'object',
-                required: ['identifier'],
-                properties: {
-                    identifier: {
-                        type: 'string',
-                        description: 'Player UUID or Minecraft nickname',
-                        examples: ['069a79f4-44e9-4726-a5fa-f2b5e5e5e5e5', 'Notch']
-                    }
-                }
+          },
+        },
+        400: {
+          type: 'object',
+          description: 'Bad request - invalid UUID or nickname',
+          properties: {
+            message: {
+              type: 'string',
+              example: 'Invalid UUID or Nickname',
             },
-            response: {
-                200: {
-                    type: 'object',
-                    description: '![Example](https://assets.zaralx.ru/api/v1/minecraft/vanilla/player/face/_zaralX_/full)',
-                    content: {
-                        'image/png': {
-                            schema: {
-                                type: 'string',
-                                format: 'binary'
-                            }
-                        }
-                    }
-                },
-                400: {
-                    type: 'object',
-                    description: 'Bad request - invalid UUID or nickname',
-                    properties: {
-                        message: {
-                            type: 'string',
-                            example: 'Invalid UUID or Nickname'
-                        }
-                    }
-                },
-                500: {
-                    type: 'object',
-                    description: 'Internal server error',
-                    properties: {
-                        message: {
-                            type: 'string',
-                            example: 'Failed to fetch skin'
-                        },
-                        error: {
-                            type: 'string',
-                            description: 'Error message'
-                        }
-                    }
-                }
-            }
-        }
-    }, async function (request, reply) {
-        const identifier: string = (request.params as any).identifier;
+          },
+        },
+        500: {
+          type: 'object',
+          description: 'Internal server error',
+          properties: {
+            message: {
+              type: 'string',
+              example: 'Failed to fetch skin',
+            },
+            error: {
+              type: 'string',
+              description: 'Error message',
+            },
+          },
+        },
+      },
+    },
+  }, async function (request, reply) {
+    const identifier: string = (request.params as any).identifier
 
-        const isUuid = isValidUUID(identifier)
-        const isNickname = isValidMinecraftNickname(identifier)
+    const isUuid = isValidUUID(identifier)
+    const isNickname = isValidMinecraftNickname(identifier)
 
-        if (!isUuid && !isNickname) {
-            return reply.status(400).send({message: 'Invalid UUID or Nickname'});
-        }
+    if (!isUuid && !isNickname) {
+      return reply.status(400).send({ message: 'Invalid UUID or Nickname' })
+    }
 
-        const uuid = isUuid ? identifier : await nicknameToUUID(fastify, identifier)
+    const uuid = isUuid ? identifier : await nicknameToUUID(fastify, identifier)
 
-        // Check cache first
-        const cachedSkinFullFace = (fastify as any).cache.skinFullFace.get(uuid);
-        if (cachedSkinFullFace && Date.now() - cachedSkinFullFace.timestamp < CACHE_TTL) {
-            fastify.log.debug(`GET FULL FACE ${identifier} FROM REDIS CACHE ${Date.now() - cachedSkinFullFace.timestamp} < ${CACHE_TTL}`)
-            reply.header('Content-Type', 'image/png');
-            reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`);
-            return reply.send(cachedSkinFullFace.data);
-        }
+    // Check cache first
+    const cachedSkinFace = (fastify as any).cache.skinFace.get(uuid)
+    if (cachedSkinFace && Date.now() - cachedSkinFace.timestamp < CACHE_TTL) {
+      fastify.log.debug(`GET FACE ${identifier} FROM REDIS CACHE ${Date.now() - cachedSkinFace.timestamp} < ${CACHE_TTL}`)
+      reply.header('Content-Type', 'image/png')
+      reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`)
+      return reply.send(cachedSkinFace.data)
+    }
 
-        try {
-            let skin = (fastify as any).cache.skin.get(uuid);
-            if (!skin || Date.now() - skin.timestamp < CACHE_TTL) {
-                const skin_url = (fastify as any).skin_url.replace("%A", uuid);
-                const response = await axios.get(skin_url, {
-                    responseType: 'arraybuffer'
-                });
-                skin = {
-                    data: response.data,
-                    timestamp: Date.now()
-                };
-                (fastify as any).cache.skin.set(uuid, skin);
-            }
+    try {
+      let skin = (fastify as any).cache.skin.get(uuid)
+      if (!skin || Date.now() - skin.timestamp < CACHE_TTL) {
+        const skin_url = (fastify as any).skin_url.replace('%A', uuid)
+        const response = await axios.get(skin_url, {
+          responseType: 'arraybuffer',
+        })
+        skin = {
+          data: response.data,
+          timestamp: Date.now(),
+        };
+        (fastify as any).cache.skin.set(uuid, skin)
+      }
 
-            const sharpSkin = sharp(skin.data);
+      const sharpSkin = sharp(skin.data)
+      const skinFace = await sharpSkin.extract({ left: 8, top: 8, width: 8, height: 8 })
+        .resize(256, 256, { kernel: sharp.kernel.nearest })
+        .toBuffer();
 
-            const layer0 = await sharpSkin.clone().extract({left: 56, top: 8, width: 8, height: 8})
-                .resize(256, 256, {kernel: sharp.kernel.nearest})
-                .toBuffer();
+      // Cache the skinFace data
+      (fastify as any).cache.skinFace.set(uuid, {
+        data: skinFace,
+        timestamp: Date.now(),
+      })
 
-            const layer1 = await sharpSkin.clone().extract({left: 8, top: 8, width: 8, height: 8})
-                .resize(256 - FULL_FACE_RESIZE, 256 - FULL_FACE_RESIZE, {kernel: sharp.kernel.nearest})
-                .toBuffer();
+      fastify.log.debug(`GET FACE ${identifier} CLAIMED TO CACHE`)
 
-            const layer2 = await sharpSkin.clone().extract({left: 40, top: 8, width: 8, height: 8})
-                .resize(256, 256, {kernel: sharp.kernel.nearest})
-                .toBuffer();
+      // Set response headers
+      reply.header('Content-Type', 'image/png')
+      reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`)
 
-            const skinFullFace = await sharp(path.join('assets', 'empty.png'))
-                .resize(256, 256)
-                .composite([
-                    {input: layer0, left: 0, top: 0},
-                    {input: layer1, left: FULL_FACE_RESIZE / 2, top: FULL_FACE_RESIZE / 2},
-                    {input: layer2, left: 0, top: 0},
-                ])
-                .toBuffer();
+      return reply.send(skinFace)
+    }
+    catch (error) {
+      fastify.log.error(error)
+      return reply.status(500).send({
+        message: 'Failed to fetch skin',
+        error: (error as any).message,
+      })
+    }
+  })
 
-            // Cache the skinFullFace data
-            (fastify as any).cache.skinFullFace.set(uuid, {
-                data: skinFullFace,
-                timestamp: Date.now()
-            });
+  fastify.get('/face/:identifier/full', {
+    schema: {
+      description: 'Get full player face image (with layers) by UUID or nickname',
+      params: {
+        type: 'object',
+        required: ['identifier'],
+        properties: {
+          identifier: {
+            type: 'string',
+            description: 'Player UUID or Minecraft nickname',
+            examples: ['069a79f4-44e9-4726-a5fa-f2b5e5e5e5e5', 'Notch'],
+          },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          description: '![Example](https://assets.zaralx.ru/api/v1/minecraft/vanilla/player/face/_zaralX_/full)',
+          content: {
+            'image/png': {
+              schema: {
+                type: 'string',
+                format: 'binary',
+              },
+            },
+          },
+        },
+        400: {
+          type: 'object',
+          description: 'Bad request - invalid UUID or nickname',
+          properties: {
+            message: {
+              type: 'string',
+              example: 'Invalid UUID or Nickname',
+            },
+          },
+        },
+        500: {
+          type: 'object',
+          description: 'Internal server error',
+          properties: {
+            message: {
+              type: 'string',
+              example: 'Failed to fetch skin',
+            },
+            error: {
+              type: 'string',
+              description: 'Error message',
+            },
+          },
+        },
+      },
+    },
+  }, async function (request, reply) {
+    const identifier: string = (request.params as any).identifier
 
-            fastify.log.debug(`GET FULL FACE ${identifier} CLAIMED TO CACHE`)
+    const isUuid = isValidUUID(identifier)
+    const isNickname = isValidMinecraftNickname(identifier)
 
-            // Set response headers
-            reply.header('Content-Type', 'image/png');
-            reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`);
+    if (!isUuid && !isNickname) {
+      return reply.status(400).send({ message: 'Invalid UUID or Nickname' })
+    }
 
-            return reply.send(skinFullFace);
-        } catch (error) {
-            fastify.log.error(error);
-            return reply.status(500).send({
-                message: 'Failed to fetch skin',
-                error: (error as any).message
-            });
-        }
-    });
+    const uuid = isUuid ? identifier : await nicknameToUUID(fastify, identifier)
+
+    // Check cache first
+    const cachedSkinFullFace = (fastify as any).cache.skinFullFace.get(uuid)
+    if (cachedSkinFullFace && Date.now() - cachedSkinFullFace.timestamp < CACHE_TTL) {
+      fastify.log.debug(`GET FULL FACE ${identifier} FROM REDIS CACHE ${Date.now() - cachedSkinFullFace.timestamp} < ${CACHE_TTL}`)
+      reply.header('Content-Type', 'image/png')
+      reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`)
+      return reply.send(cachedSkinFullFace.data)
+    }
+
+    try {
+      let skin = (fastify as any).cache.skin.get(uuid)
+      if (!skin || Date.now() - skin.timestamp < CACHE_TTL) {
+        const skin_url = (fastify as any).skin_url.replace('%A', uuid)
+        const response = await axios.get(skin_url, {
+          responseType: 'arraybuffer',
+        })
+        skin = {
+          data: response.data,
+          timestamp: Date.now(),
+        };
+        (fastify as any).cache.skin.set(uuid, skin)
+      }
+
+      const sharpSkin = sharp(skin.data)
+
+      const layer0 = await sharpSkin.clone().extract({ left: 56, top: 8, width: 8, height: 8 })
+        .resize(256, 256, { kernel: sharp.kernel.nearest })
+        .toBuffer()
+
+      const layer1 = await sharpSkin.clone().extract({ left: 8, top: 8, width: 8, height: 8 })
+        .resize(256 - FULL_FACE_RESIZE, 256 - FULL_FACE_RESIZE, { kernel: sharp.kernel.nearest })
+        .toBuffer()
+
+      const layer2 = await sharpSkin.clone().extract({ left: 40, top: 8, width: 8, height: 8 })
+        .resize(256, 256, { kernel: sharp.kernel.nearest })
+        .toBuffer()
+
+      const skinFullFace = await sharp(path.join('assets', 'empty.png'))
+        .resize(256, 256)
+        .composite([
+          { input: layer0, left: 0, top: 0 },
+          { input: layer1, left: FULL_FACE_RESIZE / 2, top: FULL_FACE_RESIZE / 2 },
+          { input: layer2, left: 0, top: 0 },
+        ])
+        .toBuffer();
+
+      // Cache the skinFullFace data
+      (fastify as any).cache.skinFullFace.set(uuid, {
+        data: skinFullFace,
+        timestamp: Date.now(),
+      })
+
+      fastify.log.debug(`GET FULL FACE ${identifier} CLAIMED TO CACHE`)
+
+      // Set response headers
+      reply.header('Content-Type', 'image/png')
+      reply.header('Cache-Control', `public, max-age=${CACHE_TTL}`)
+
+      return reply.send(skinFullFace)
+    }
+    catch (error) {
+      fastify.log.error(error)
+      return reply.status(500).send({
+        message: 'Failed to fetch skin',
+        error: (error as any).message,
+      })
+    }
+  })
 }
 
 export default route
