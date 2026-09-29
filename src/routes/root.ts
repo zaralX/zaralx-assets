@@ -1,44 +1,29 @@
-import { FastifyPluginAsync } from 'fastify'
+import type { FastifyPluginAsync } from 'fastify'
+import { publicUrl } from '../utils/http'
 
-const root: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
+const root: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', {
     schema: {
-      description: 'Get API information and version details',
+      description: 'API information',
       response: {
         200: {
           type: 'object',
           properties: {
-            message: {
-              type: 'string',
-              description: 'Project information message',
-            },
-            sources: {
-              type: 'object',
-              properties: {
-                vanilla: {
-                  type: 'object',
-                  properties: {
-                    version: {
-                      type: 'string',
-                      description: 'Minecraft vanilla version',
-                      example: '1.21.5',
-                    },
-                  },
-                },
-              },
-            },
+            message: { type: 'string' },
+            docs: { type: 'string' },
+            versions: { type: 'string' },
+            latest: { type: ['string', 'null'] },
           },
         },
       },
     },
-  }, async function (request, reply) {
+  }, async () => {
+    const latest = await fastify.catalog.resolve('latest')
     return {
       message: 'Open source project. Github: https://github.com/zaralX/zaralx-assets',
-      sources: {
-        vanilla: {
-          version: '1.21.5',
-        },
-      },
+      docs: publicUrl('/swagger'),
+      versions: publicUrl('/v2/minecraft/versions'),
+      latest: latest?.id ?? null,
     }
   })
 }

@@ -1,54 +1,21 @@
-import { FastifyPluginAsync } from 'fastify'
+import type { FastifyPluginAsync } from 'fastify'
+import { LANG_PATTERN } from '../../../../../catalog/paths'
+import { useLegacyVersion } from '../../../../../utils/http'
 
-const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-  fastify.get('/:id', {
+const route: FastifyPluginAsync = async (fastify) => {
+  fastify.get<{ Params: { id: string } }>('/:id', {
     schema: {
-      description: 'Get language data by language identifier',
-      params: {
-        type: 'object',
-        required: ['id'],
-        properties: {
-          id: {
-            type: 'string',
-            description: 'The language identifier',
-            examples: ['en_us', 'ru_ru'],
-          },
-        },
-      },
-      response: {
-        200: {
-          type: 'object',
-          additionalProperties: true,
-          description: 'Language data object containing all translations',
-        },
-        400: {
-          type: 'object',
-          description: 'Bad request - unknown language',
-          properties: {
-            message: {
-              type: 'string',
-              example: 'Unknown lang',
-            },
-            lang_keys: {
-              type: 'array',
-              items: {
-                type: 'string',
-              },
-              description: 'Available language keys',
-            },
-          },
-        },
-      },
+      tags: ['v1'],
+      deprecated: true,
+      description: 'Use /v2/minecraft/{version}/lang/{code}',
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'string', examples: ['en_us', 'ru_ru'] } } },
     },
-  }, async function (request, reply) {
-    const id = (request.params as any).id
-    const lang_data = (fastify as any).lang?.[id]
-
-    if (!lang_data) {
-      return reply.status(400).send({ message: 'Unknown lang', lang_keys: Object.keys((fastify as any).lang) })
+  }, async (request, reply) => {
+    const { data } = await useLegacyVersion(fastify)
+    if (!LANG_PATTERN.test(request.params.id) || !data.langIndex[request.params.id]) {
+      return reply.status(400).send({ message: 'Unknown lang', lang_keys: Object.keys(data.langIndex).sort() })
     }
-
-    return reply.status(200).send(lang_data)
+    return fastify.catalog.lang(data, request.params.id)
   })
 }
 

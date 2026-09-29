@@ -1,67 +1,25 @@
-import { FastifyPluginAsync } from 'fastify'
-import path from 'path'
-import { createReadStream } from 'fs'
+import type { FastifyPluginAsync } from 'fastify'
+import { ID_PATTERN } from '../../../../../../catalog/paths'
+import { sendImage, useLegacyVersion } from '../../../../../../utils/http'
 
-const fs = require('fs').promises
-
-const route: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-  fastify.get('/icon', {
+const route: FastifyPluginAsync = async (fastify) => {
+  fastify.get<{ Params: { item: string } }>('/icon', {
     schema: {
+      tags: ['v1'],
+      deprecated: true,
+      description: 'Use /v2/minecraft/{version}/items/{id}/icon',
       params: {
         type: 'object',
         required: ['item'],
-        properties: {
-          item: { type: 'string', description: 'The item identifier', examples: ['diamond_block', 'carrot'] },
-        },
-      },
-      response: {
-        200: {
-          type: 'object',
-          description: '![Example](https://assets.zaralx.ru/api/v1/minecraft/vanilla/item/diamond_block/icon)',
-          content: {
-            'image/webp': {
-              schema: {
-                type: 'string',
-                format: 'binary',
-              },
-            },
-          },
-        },
-        404: {
-          description: 'Item not found',
-          type: 'object',
-        },
+        properties: { item: { type: 'string', description: 'The item identifier', examples: ['diamond_block', 'carrot'] } },
       },
     },
-    config: {
-      rateLimit: {
-        timeWindow: '1 minute',
-        max: 5000,
-      },
-    },
-  }, async function (request, reply) {
-    const itemId = (request.params as any).item
-    const imagePath = path.join('assets', 'items', `${itemId}.webp`)
-
-    try {
-      // Check if file exists
-      await fs.access(imagePath)
-
-      // Set cache headers for 1 day
-      reply.header('Cache-Control', 'public, max-age=86400')
-      reply.header('Content-Type', 'image/webp')
-
-      // Create and send the file stream
-      const stream = createReadStream(imagePath)
-      return reply.send(stream)
-    }
-    catch (err: any) {
-      if (err.code === 'ENOENT') {
-        reply.code(404)
-        return { error: 'Item not found' }
-      }
-      throw err
-    }
+    config: { rateLimit: { max: 5000, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
+    const { data, alias } = await useLegacyVersion(fastify)
+    const item = ID_PATTERN.test(request.params.item) ? data.items.get(request.params.item) : undefined
+    if (!item?.icon) return reply.code(404).send({ error: 'Item not found' })
+    return sendImage(request, reply, { file: fastify.catalog.iconFile(data.meta.id, item.id, 256), format: 'webp' }, { alias, builtAt: data.meta.builtAt })
   })
 }
 
