@@ -25,7 +25,7 @@ const env = process.env
 export const config = {
   host: env.HOST ?? env.FASTIFY_ADDRESS ?? '0.0.0.0',
   port: int(env.PORT ?? env.FASTIFY_PORT, 3000),
-  logLevel: env.LOG_LEVEL ?? env.FASTIFY_LOG_LEVEL ?? 'info',
+  logLevel: (env.LOG_LEVEL ?? env.FASTIFY_LOG_LEVEL ?? 'info').toLowerCase(),
   trustProxy: trustProxy(env.TRUST_PROXY),
   publicUrl: (env.PUBLIC_URL ?? 'https://assets.zaralx.ru/api').replace(/\/+$/, ''),
   redisUrl: env.REDIS_URL ?? (env.REDIS_HOST ? `redis://${env.REDIS_HOST}:${env.REDIS_PORT ?? 6379}` : undefined),
