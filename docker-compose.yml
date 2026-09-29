@@ -21,6 +21,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      # Proxies skip starting containers, so check often until the first success
+      start_period: 30s
+      start_interval: 2s
 
   # Builds all versions on first start, about a minute each
   worker:
