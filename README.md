@@ -15,14 +15,14 @@ screenshots of 1.21.5 in `test/golden`.
 Files are stored once by their sha1 in `DATA_DIR/blobs/<ab>/<sha1>.<ext>`, most icons and textures
 are the same across versions. `DATA_DIR/versions/<id>` only holds manifests:
 
-| File                 | Content                                                          |
-|----------------------|------------------------------------------------------------------|
-| `items.json`         | items, translation keys, icon hash per size (16 to 256)          |
-| `textures.json`      | textures with their hash and `.mcmeta` hash                      |
-| `blocks.json`        | blocks, texture of each side, all textures of all states         |
+| File                 | Content                                                                   |
+|----------------------|---------------------------------------------------------------------------|
+| `items.json`         | items, translation keys, icon hash per size (16 to 256)                   |
+| `textures.json`      | textures with their hash and `.mcmeta` hash                               |
+| `blocks.json`        | blocks, texture of each side, all textures of all states                  |
 | `lang.json`          | language hashes, languages other than `en_us` are downloaded on first use |
-| `creative-tabs.json` | creative tabs from `resources/creative-tabs`                     |
-| `meta.json`          | build info                                                       |
+| `creative-tabs.json` | creative tabs from `resources/creative-tabs`                              |
+| `meta.json`          | build info                                                                |
 
 ## API
 
@@ -57,18 +57,18 @@ pnpm pipeline build 26.3
 pnpm dev
 ```
 
-| Command                                       | Result                                    |
-|-----------------------------------------------|-------------------------------------------|
-| `pnpm dev`                                    | API with reload                           |
-| `pnpm pipeline list`                          | versions and their state                  |
-| `pnpm pipeline sync`                          | build missing or outdated versions        |
-| `pnpm pipeline watch`                         | `sync` every `PIPELINE_INTERVAL_MINUTES`  |
-| `pnpm pipeline build <id...>`                 | build given versions                      |
+| Command                                       | Result                                                    |
+|-----------------------------------------------|-----------------------------------------------------------|
+| `pnpm dev`                                    | API with reload                                           |
+| `pnpm pipeline list`                          | versions and their state                                  |
+| `pnpm pipeline sync`                          | build missing or outdated versions                        |
+| `pnpm pipeline watch`                         | `sync` every `PIPELINE_INTERVAL_MINUTES`                  |
+| `pnpm pipeline build <id...>`                 | build given versions                                      |
 | `pnpm pipeline gc`                            | delete blobs no version refers to, also runs after `sync` |
-| `pnpm pipeline render <id> <item> --size 512` | render one icon to png                    |
-| `pnpm test`                                   | unit tests                                |
-| `pnpm test:golden`                            | compare icons with the 1.21.5 screenshots |
-| `pnpm lint`, `pnpm typecheck`                 | checks                                    |
+| `pnpm pipeline render <id> <item> --size 512` | render one icon to png                                    |
+| `pnpm test`                                   | unit tests                                                |
+| `pnpm test:golden`                            | compare icons with the 1.21.5 screenshots                 |
+| `pnpm lint`, `pnpm typecheck`                 | checks                                                    |
 
 Settings are in [.env.example](.env.example). After changing the renderer or the output format,
 bump `PIPELINE_VERSION` in `src/pipeline/build.ts` so workers rebuild existing versions. If the manifest
