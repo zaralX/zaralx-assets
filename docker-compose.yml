@@ -5,7 +5,8 @@ services:
     environment:
       REDIS_HOST: redis
       PUBLIC_URL: ${PUBLIC_URL:-https://assets.zaralx.ru/api}
-      TRUST_PROXY: ${TRUST_PROXY:-false}
+      # Behind a reverse proxy (Coolify, nginx) the client address comes from X-Forwarded-For
+      TRUST_PROXY: ${TRUST_PROXY:-1}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
       - "${SERVER_PORT:-3000}:3000"
@@ -15,6 +16,11 @@ services:
       - zassets
     depends_on:
       - redis
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   # Builds all versions on first start, about a minute each
   worker:
