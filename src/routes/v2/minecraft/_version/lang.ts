@@ -6,6 +6,7 @@ import { publicUrl, setCaching, useLang, useVersion } from '../../../../utils/ht
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { version: string } }>('/lang', {
     schema: {
+      summary: 'List languages',
       tags: ['lang'],
       description: 'Languages available for a version',
       params: { type: 'object', required: ['version'], properties: { version: versionParam } },
@@ -21,6 +22,7 @@ const route: FastifyPluginAsync = async (fastify) => {
 
   fastify.get<{ Params: { version: string, code: string } }>('/lang/:code', {
     schema: {
+      summary: 'Language',
       tags: ['lang'],
       description: 'Every translation of a language. Missing keys are not filled from en_us',
       params: {

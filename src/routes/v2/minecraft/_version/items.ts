@@ -42,6 +42,7 @@ function describe(data: VersionData, item: ItemEntry, name: (key: string) => str
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { version: string }, Querystring: { lang: string, category?: string, q?: string } }>('/items', {
     schema: {
+      summary: 'List items',
       tags: ['items'],
       description: 'All items of a version',
       params: { type: 'object', required: ['version'], properties: { version: versionParam } },
@@ -73,6 +74,7 @@ const route: FastifyPluginAsync = async (fastify) => {
 
   fastify.get<{ Params: ItemParams, Querystring: { lang: string } }>('/items/:id', {
     schema: {
+      summary: 'Item',
       tags: ['items'],
       description: 'Item details: localized name, creative tab, icon and the textures its model uses',
       params: { type: 'object', required: ['version', 'id'], properties: { version: versionParam, id: { ...idParam, examples: ['diamond_sword'] } } },
@@ -102,6 +104,7 @@ const route: FastifyPluginAsync = async (fastify) => {
 
   fastify.get<{ Params: ItemParams, Querystring: { size?: number, format: ImageFormat } }>('/items/:id/icon', {
     schema: {
+      summary: 'Item icon',
       tags: ['items'],
       description: 'Item icon as rendered in an inventory slot (256px by default)\n\n![diamond_block](https://assets.zaralx.ru/api/v2/minecraft/latest/items/diamond_block/icon?size=64)',
       params: { type: 'object', required: ['version', 'id'], properties: { version: versionParam, id: { ...idParam, examples: ['diamond_block'] } } },

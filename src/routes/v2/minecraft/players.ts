@@ -18,6 +18,7 @@ const pngResponse = {
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { identifier: string } }>('/players/:identifier', {
     schema: {
+      summary: 'Player',
       tags: ['players'],
       description: 'Player UUID and links to the skin images',
       params: identifierParam,
@@ -40,6 +41,7 @@ const route: FastifyPluginAsync = async (fastify) => {
 
   fastify.get<{ Params: { identifier: string } }>('/players/:identifier/skin', {
     schema: {
+      summary: 'Player skin',
       tags: ['players'],
       description: 'Skin texture\n\n![skin](https://assets.zaralx.ru/api/v2/minecraft/players/_zaralX_/skin)',
       params: identifierParam,
@@ -52,6 +54,7 @@ const route: FastifyPluginAsync = async (fastify) => {
 
   fastify.get<{ Params: { identifier: string }, Querystring: { size: number, overlay: boolean } }>('/players/:identifier/face', {
     schema: {
+      summary: 'Player face',
       tags: ['players'],
       description: 'Front of the head\n\n![face](https://assets.zaralx.ru/api/v2/minecraft/players/_zaralX_/face?size=64&overlay=true)',
       params: identifierParam,

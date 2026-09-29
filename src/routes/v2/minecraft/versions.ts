@@ -18,6 +18,7 @@ const summary = {
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get('/versions', {
     schema: {
+      summary: 'List versions',
       tags: ['versions'],
       description: 'Versions that have been built, newest first',
       response: {

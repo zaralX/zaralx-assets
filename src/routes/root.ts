@@ -5,6 +5,7 @@ import { publicUrl } from '../utils/http'
 const root: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', {
     schema: {
+      summary: 'API info',
       description: 'API information',
       response: {
         200: {

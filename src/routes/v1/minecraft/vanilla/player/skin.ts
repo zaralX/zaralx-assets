@@ -4,6 +4,7 @@ import { loadSkin, sendPng } from '../../../../../players/http'
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { identifier: string } }>('/skin/:identifier', {
     schema: {
+      summary: 'Player skin',
       tags: ['v1'],
       deprecated: true,
       description: 'Use /v2/minecraft/players/{identifier}/skin',

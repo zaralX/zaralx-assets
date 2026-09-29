@@ -5,6 +5,7 @@ import { setCaching, useVersion } from '../../../../utils/http'
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { version: string } }>('/creative-tabs', {
     schema: {
+      summary: 'Creative tabs',
       tags: ['items'],
       description: 'Item ids per creative tab, in tab order. Items that are in no tab are listed under `uncategorized`',
       params: { type: 'object', required: ['version'], properties: { version: versionParam } },

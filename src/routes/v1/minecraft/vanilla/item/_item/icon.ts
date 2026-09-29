@@ -6,6 +6,7 @@ import { sendImage, useLegacyVersion, versionCaching } from '../../../../../../u
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { item: string } }>('/icon', {
     schema: {
+      summary: 'Item icon',
       tags: ['v1'],
       deprecated: true,
       description: 'Use /v2/minecraft/{version}/items/{id}/icon',

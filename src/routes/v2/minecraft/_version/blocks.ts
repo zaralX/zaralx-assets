@@ -7,6 +7,7 @@ const sides = ['up', 'down', 'north', 'south', 'west', 'east'] as const
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { version: string }, Querystring: { lang: string, q?: string } }>('/blocks', {
     schema: {
+      summary: 'List blocks',
       tags: ['blocks'],
       description: 'All blocks of a version',
       params: { type: 'object', required: ['version'], properties: { version: versionParam } },
@@ -36,6 +37,7 @@ const route: FastifyPluginAsync = async (fastify) => {
 
   fastify.get<{ Params: { version: string, id: string }, Querystring: { lang: string } }>('/blocks/:id', {
     schema: {
+      summary: 'Block textures',
       tags: ['blocks'],
       description: 'Block textures, separately from the rendered icon: the texture of every side in the default state, plus every texture any state uses',
       params: { type: 'object', required: ['version', 'id'], properties: { version: versionParam, id: { ...idParam, examples: ['oak_log', 'furnace'] } } },
