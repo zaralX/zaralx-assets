@@ -48,6 +48,8 @@ are the same across versions. `DATA_DIR/versions/<id>` only holds manifests:
 | `GET /v2/minecraft/players/{name or uuid}/skin`                            | skin                                               |
 | `GET /v2/minecraft/players/{name or uuid}/face?size=&overlay=`             | face                                               |
 
+Skin and face images of unknown players are Steve, so embedded images never break.
+
 v1 routes keep their paths and responses and use `LEGACY_VERSION` (1.21.5).
 
 ## Development

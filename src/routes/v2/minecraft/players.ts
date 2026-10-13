@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { renderFace } from '../../../players'
-import { loadSkin, sendPng } from '../../../players/http'
+import { loadSkin, loadSkinImage, sendPng } from '../../../players/http'
 import { publicUrl } from '../../../utils/http'
 
 const identifierParam = {
@@ -43,20 +43,20 @@ const route: FastifyPluginAsync = async (fastify) => {
     schema: {
       summary: 'Player skin',
       tags: ['players'],
-      description: 'Skin texture\n\n![skin](https://assets.zaralx.ru/api/v2/minecraft/players/_zaralX_/skin)',
+      description: 'Skin texture, Steve for unknown players\n\n![skin](https://assets.zaralx.ru/api/v2/minecraft/players/_zaralX_/skin)',
       params: identifierParam,
       response: pngResponse,
     },
   }, async (request, reply) => {
-    const { skin } = await loadSkin(fastify, request.params.identifier)
-    return sendPng(reply, skin)
+    const { skin, maxAge } = await loadSkinImage(fastify, request.params.identifier)
+    return sendPng(reply, skin, maxAge)
   })
 
   fastify.get<{ Params: { identifier: string }, Querystring: { size: number, overlay: boolean } }>('/players/:identifier/face', {
     schema: {
       summary: 'Player face',
       tags: ['players'],
-      description: 'Front of the head\n\n![face](https://assets.zaralx.ru/api/v2/minecraft/players/_zaralX_/face?size=64&overlay=true)',
+      description: 'Front of the head, Steve for unknown players\n\n![face](https://assets.zaralx.ru/api/v2/minecraft/players/_zaralX_/face?size=64&overlay=true)',
       params: identifierParam,
       querystring: {
         type: 'object',
@@ -68,8 +68,8 @@ const route: FastifyPluginAsync = async (fastify) => {
       response: pngResponse,
     },
   }, async (request, reply) => {
-    const { skin } = await loadSkin(fastify, request.params.identifier)
-    return sendPng(reply, await renderFace(skin, request.query.size, request.query.overlay))
+    const { skin, maxAge } = await loadSkinImage(fastify, request.params.identifier)
+    return sendPng(reply, await renderFace(skin, request.query.size, request.query.overlay), maxAge)
   })
 }
 
