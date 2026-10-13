@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { renderFace, renderLayeredFace } from '../../../../../players'
-import { loadSkin, sendPng } from '../../../../../players/http'
+import { loadSkinImage, sendPng } from '../../../../../players/http'
 
 const FACE_SIZE = 256
 
@@ -10,15 +10,15 @@ const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { identifier: string } }>('/face/:identifier', {
     schema: { summary: 'Player face', tags: ['v1'], deprecated: true, description: 'Use /v2/minecraft/players/{identifier}/face?overlay=false', params },
   }, async (request, reply) => {
-    const { skin } = await loadSkin(fastify, request.params.identifier)
-    return sendPng(reply, await renderFace(skin, FACE_SIZE, false))
+    const { skin, maxAge } = await loadSkinImage(fastify, request.params.identifier)
+    return sendPng(reply, await renderFace(skin, FACE_SIZE, false), maxAge)
   })
 
   fastify.get<{ Params: { identifier: string } }>('/face/:identifier/full', {
     schema: { summary: 'Player face with hat', tags: ['v1'], deprecated: true, description: 'Face with the hat layer drawn over the back of the hat', params },
   }, async (request, reply) => {
-    const { skin } = await loadSkin(fastify, request.params.identifier)
-    return sendPng(reply, await renderLayeredFace(skin, FACE_SIZE))
+    const { skin, maxAge } = await loadSkinImage(fastify, request.params.identifier)
+    return sendPng(reply, await renderLayeredFace(skin, FACE_SIZE), maxAge)
   })
 }
 

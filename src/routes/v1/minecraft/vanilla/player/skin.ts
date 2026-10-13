@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify'
-import { loadSkin, sendPng } from '../../../../../players/http'
+import { loadSkinImage, sendPng } from '../../../../../players/http'
 
 const route: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { identifier: string } }>('/skin/:identifier', {
@@ -11,8 +11,8 @@ const route: FastifyPluginAsync = async (fastify) => {
       params: { type: 'object', required: ['identifier'], properties: { identifier: { type: 'string', example: '_zaralX_' } } },
     },
   }, async (request, reply) => {
-    const { skin } = await loadSkin(fastify, request.params.identifier)
-    return sendPng(reply, skin)
+    const { skin, maxAge } = await loadSkinImage(fastify, request.params.identifier)
+    return sendPng(reply, skin, maxAge)
   })
 }
 
